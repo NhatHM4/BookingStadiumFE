@@ -45,6 +45,8 @@ export default function StadiumDetailPage({
     date: string;
   } | null>(null);
 
+  const [activeTab, setActiveTab] = useState<string>("fields");
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-20">
@@ -169,7 +171,7 @@ export default function StadiumDetailPage({
       </div>
 
       {/* Tabs: Fields, Slots, Reviews, Deposit Policy */}
-      <Tabs defaultValue="fields" className="space-y-6">
+      <Tabs defaultValue="fields" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="fields">
             <Layers className="h-4 w-4 mr-1.5 hidden sm:inline" />
@@ -201,7 +203,10 @@ export default function StadiumDetailPage({
                       ? "ring-2 ring-primary"
                       : ""
                   }`}
-                  onClick={() => setSelectedFieldId(field.id)}
+                  onClick={() => {
+                    setSelectedFieldId(field.id);
+                    setActiveTab("slots");
+                  }}
                 >
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-3">

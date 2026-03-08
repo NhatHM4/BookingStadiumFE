@@ -78,7 +78,7 @@ export function SlotPicker({
                   const diff =
                     Math.round(
                       (new Date(d.date).getTime() - today.getTime()) /
-                        (1000 * 60 * 60 * 24)
+                        (1000 * 60 * 60 * 24) +1
                     );
                   setDateOffset(diff);
                 }}
