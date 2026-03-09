@@ -88,11 +88,11 @@ export default function TeamDetailPage({
   const isCaptain = team ? team.captainId === currentUserId : false;
 
   const activeMembers =
-    team?.members.filter(
+    (team?.members || []).filter(
       (m) =>
         m.status === TeamMemberStatus.ACTIVE ||
         m.status === TeamMemberStatus.PENDING
-    ) ?? [];
+    );
 
   const handleInvite = async (data: AddMemberFormData) => {
     try {
@@ -385,15 +385,15 @@ export default function TeamDetailPage({
               {confirmAction?.type === "remove"
                 ? "Loại thành viên?"
                 : confirmAction?.type === "transfer"
-                ? "Chuyển đội trưởng?"
-                : "Rời đội?"}
+                  ? "Chuyển đội trưởng?"
+                  : "Rời đội?"}
             </DialogTitle>
             <DialogDescription>
               {confirmAction?.type === "remove"
                 ? `${confirmAction.userName} sẽ bị loại khỏi đội.`
                 : confirmAction?.type === "transfer"
-                ? `${confirmAction.userName} sẽ trở thành đội trưởng mới.`
-                : "Bạn sẽ không còn là thành viên của đội."}
+                  ? `${confirmAction.userName} sẽ trở thành đội trưởng mới.`
+                  : "Bạn sẽ không còn là thành viên của đội."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -423,8 +423,8 @@ export default function TeamDetailPage({
               {(removeMember.isPending ||
                 transferCaptain.isPending ||
                 leaveTeam.isPending) && (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              )}
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                )}
               Xác nhận
             </Button>
           </DialogFooter>

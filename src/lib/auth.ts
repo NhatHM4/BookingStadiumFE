@@ -55,6 +55,8 @@ export const authConfig: NextAuthConfig = {
             password: credentials.password as string,
           });
 
+          console.log("Login response:", { success: res.success, message: res.message }, credentials);
+
           if (res.success && res.data) {
             const { accessToken, refreshToken, user } = res.data;
             return {
@@ -69,8 +71,10 @@ export const authConfig: NextAuthConfig = {
               authProvider: user.authProvider,
             };
           }
+          console.error("Login failed:", res.message);
           return null;
-        } catch {
+        } catch (error) {
+          console.error("Authorize error:", error);
           return null;
         }
       },

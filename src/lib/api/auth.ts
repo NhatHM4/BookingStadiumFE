@@ -12,22 +12,56 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1
 export async function loginApi(
   data: LoginRequest
 ): Promise<ApiResponse<JwtResponse>> {
-  const res = await axios.post(`${API_URL}/auth/login`, data);
-  return res.data;
+  try {
+    console.log("Calling login API:", `${API_URL}/auth/login`, data);
+    const res = await axios.post(`${API_URL}/auth/login`, data);
+    return res.data;
+  } catch (error: any) {
+    console.error("Login API error details:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      message: error.message,
+    });
+    return {
+      success: false,
+      message: error.response?.data?.message || `Login failed (${error.response?.status || 'Network error'})`,
+      data: null as any,
+    };
+  }
 }
 
 export async function registerApi(
   data: RegisterRequest
 ): Promise<ApiResponse<JwtResponse>> {
-  const res = await axios.post(`${API_URL}/auth/register`, data);
-  return res.data;
+  try {
+    const res = await axios.post(`${API_URL}/auth/register`, data);
+    return res.data;
+  } catch (error: any) {
+    console.error("Register API error:", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Registration failed",
+      data: null as any,
+    };
+  }
 }
 
 export async function socialLoginApi(
   data: SocialLoginRequest
 ): Promise<ApiResponse<JwtResponse>> {
-  const res = await axios.post(`${API_URL}/auth/social-login`, data);
-  return res.data;
+  try {
+    const res = await axios.post(`${API_URL}/auth/social-login`, data);
+    return res.data;
+  } catch (error: any) {
+    console.error("Social login API error:", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Social login failed",
+      data: null as any,
+    };
+  }
 }
 
 export async function refreshTokenApi(

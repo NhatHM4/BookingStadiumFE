@@ -38,7 +38,7 @@ export default function MyTeamsPage() {
   // Separate pending invites from active teams
   const pendingInvites =
     teams?.flatMap((t) =>
-      t.members
+      (t.members || [])
         .filter((m) => m.status === TeamMemberStatus.PENDING)
         .map((m) => ({ ...m, teamName: t.name, teamId: t.id }))
     ) ?? [];
