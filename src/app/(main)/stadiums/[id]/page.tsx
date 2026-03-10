@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import {
   MapPin,
   Clock,
@@ -35,6 +36,7 @@ export default function StadiumDetailPage({
   const { id } = use(params);
   const stadiumId = parseInt(id, 10);
 
+  const { data: session } = useSession();
   const { data: stadium, isLoading, error } = useStadium(stadiumId);
   const { data: fields } = useFields(stadiumId);
   const { data: depositPolicy } = useDepositPolicy(stadiumId);
@@ -317,7 +319,11 @@ export default function StadiumDetailPage({
                     </p>
                   </div>
                   <Link
-                    href={`/bookings/new?fieldId=${selectedFieldId}&timeSlotId=${selectedSlot.slot.timeSlotId}&date=${selectedSlot.date}`}
+                    href={
+                      session
+                        ? `/bookings/new?fieldId=${selectedFieldId}&timeSlotId=${selectedSlot.slot.timeSlotId}&date=${selectedSlot.date}`
+                        : `/bookings/guest?fieldId=${selectedFieldId}&timeSlotId=${selectedSlot.slot.timeSlotId}&date=${selectedSlot.date}&stadiumId=${stadiumId}`
+                    }
                   >
                     <Button>Đặt sân ngay</Button>
                   </Link>

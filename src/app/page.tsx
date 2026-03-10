@@ -65,6 +65,12 @@ export default function HomePage() {
                 </Button>
               </Link>
             </div>
+            <p className="mt-6 text-sm text-muted-foreground">
+              💡 <strong>Mẹo:</strong> Bạn có thể{" "}
+              <Link href="/bookings/guest" className="text-primary underline hover:text-primary/80">
+                đặt sân mà không cần đăng nhập
+              </Link>
+            </p>
             <HeroSearch />
           </div>
         </section>

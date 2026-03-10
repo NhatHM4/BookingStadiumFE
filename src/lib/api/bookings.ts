@@ -3,6 +3,7 @@ import type { ApiResponse, PaginatedData } from "@/types/api";
 import type {
   BookingResponse,
   BookingRequest,
+  GuestBookingRequest,
   DepositResponse,
   DepositRequest,
 } from "@/types/index";
@@ -16,6 +17,13 @@ export async function createBooking(
   data: BookingRequest
 ): Promise<ApiResponse<BookingResponse>> {
   const res = await apiClient.post("/bookings", data);
+  return res.data;
+}
+
+export async function createGuestBooking(
+  data: GuestBookingRequest
+): Promise<ApiResponse<BookingResponse>> {
+  const res = await apiClient.post("/bookings/guest", data);
   return res.data;
 }
 

@@ -12,7 +12,7 @@ export default auth((req) => {
   }
 
   // Public routes - no protection needed
-  const publicRoutes = ["/", "/login", "/register", "/stadiums", "/matches"];
+  const publicRoutes = ["/", "/login", "/register", "/stadiums", "/matches", "/bookings/guest"];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
@@ -58,7 +58,7 @@ export default auth((req) => {
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
-  if (isProtectedRoute && !isLoggedIn) {
+  if (isProtectedRoute && !isPublicRoute && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 

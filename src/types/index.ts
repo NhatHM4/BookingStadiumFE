@@ -118,6 +118,7 @@ export interface AvailableSlotResponse {
   endTime: string;
   price: number;
   isAvailable: boolean;
+  bookedByName?: string; // Name of the person who booked this slot
 }
 
 // ========================
@@ -127,8 +128,12 @@ export interface AvailableSlotResponse {
 export interface BookingResponse {
   id: number;
   bookingCode: string;
-  customerId: number;
+  customerId: number | null;
   customerName: string;
+  isGuestBooking?: boolean;
+  guestName?: string;
+  guestPhone?: string;
+  guestEmail?: string;
   fieldId: number;
   fieldName: string;
   stadiumId: number;
@@ -172,6 +177,16 @@ export interface BookingRequest {
   hostSharePercent?: number;
   opponentSharePercent?: number;
   matchMessage?: string;
+}
+
+export interface GuestBookingRequest {
+  fieldId: number;
+  timeSlotId: number;
+  bookingDate: string;
+  note?: string;
+  guestName: string;
+  guestPhone: string;
+  guestEmail?: string;
 }
 
 // ========================
