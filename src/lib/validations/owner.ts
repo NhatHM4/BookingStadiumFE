@@ -17,7 +17,7 @@ export type StadiumFormData = z.infer<typeof stadiumSchema>;
 
 export const fieldSchema = z.object({
   name: z.string().min(1, "Tên sân con không được trống"),
-  fieldType: z.enum(["FIVE_A_SIDE", "SEVEN_A_SIDE", "ELEVEN_A_SIDE"], {
+  fieldType: z.enum(["FIVE_A_SIDE", "SEVEN_A_SIDE", "ELEVEN_A_SIDE", ""], {
     message: "Chọn loại sân",
   }),
   defaultPrice: z.number().min(0, "Giá không hợp lệ"),

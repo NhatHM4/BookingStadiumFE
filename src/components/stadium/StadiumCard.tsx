@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { FieldTypeLabel } from "@/types/enums";
 import { formatPrice, formatTimeRange, getImageUrl } from "@/lib/utils";
 import type { StadiumResponse } from "@/types/index";
+import Image from "next/image";
 
 interface StadiumCardProps {
   stadium: StadiumResponse;
@@ -23,9 +24,16 @@ export function StadiumCard({ stadium }: StadiumCardProps) {
         {/* Image */}
         <div className="relative aspect-video overflow-hidden bg-muted">
           {stadium.imageUrl ? (
-            <img
-              src={getImageUrl(stadium.imageUrl) || undefined}
+            // <img
+            //   src={getImageUrl(stadium.imageUrl) || undefined}
+            //   alt={stadium.name}
+            //   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            // />
+
+            <Image
+              src={getImageUrl(stadium.imageUrl)!}
               alt={stadium.name}
+              fill
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { vi } from "date-fns/locale";
 import { CalendarDays, Clock, ChevronLeft, ChevronRight } from "lucide-react";
@@ -30,10 +30,16 @@ export function SlotPicker({
 }: SlotPickerProps) {
   const today = new Date();
   const [dateOffset, setDateOffset] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
   const currentDate = addDays(today, dateOffset);
   const dateStr = externalDate || format(currentDate, "yyyy-MM-dd");
 
   const { data: slots, isLoading } = useAvailableSlots(fieldId, dateStr);
+
+  // Only check for past slots after client-side hydration to avoid mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Generate 7-day date selector
   const dates = Array.from({ length: 7 }, (_, i) => {
@@ -48,6 +54,14 @@ export function SlotPicker({
   });
 
   const internalDate = format(currentDate, "yyyy-MM-dd");
+
+  // Check if a slot is in the past (only on client after mount)
+  const isSlotInPast = (slot: AvailableSlotResponse, dateStr: string): boolean => {
+    if (!isMounted) return false; // Prevent hydration mismatch
+    const now = new Date();
+    const slotDateTime = new Date(`${dateStr}T${slot.startTime}`);
+    return slotDateTime < now;
+  };
 
   return (
     <Card>
@@ -78,7 +92,7 @@ export function SlotPicker({
                   const diff =
                     Math.round(
                       (new Date(d.date).getTime() - today.getTime()) /
-                        (1000 * 60 * 60 * 24) +1
+                      (1000 * 60 * 60 * 24) + 1
                     );
                   setDateOffset(diff);
                 }}
@@ -122,43 +136,56 @@ export function SlotPicker({
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {slots.map((slot) => (
-              <button
-                key={slot.timeSlotId}
-                disabled={!slot.isAvailable}
-                onClick={() => onSlotSelect?.(slot, dateStr)}
-                className={cn(
-                  "flex flex-col items-center p-3 rounded-lg border text-sm transition-all",
-                  slot.isAvailable
-                    ? selectedSlotId === slot.timeSlotId
-                      ? "border-primary bg-primary/10 ring-2 ring-primary"
-                      : "border-border hover:border-primary hover:bg-primary/5 cursor-pointer"
-                    : "border-border bg-muted/50 opacity-50 cursor-not-allowed"
-                )}
-              >
-                <span className="font-medium">
-                  {slot.startTime} - {slot.endTime}
-                </span>
-                <span
+            {slots.map((slot) => {
+              const isPast = isSlotInPast(slot, dateStr);
+              const isDisabled = !slot.isAvailable || isPast;
+
+              return (
+                <button
+                  key={slot.timeSlotId}
+                  disabled={isDisabled}
+                  onClick={() => onSlotSelect?.(slot, dateStr)}
                   className={cn(
-                    "text-xs mt-1",
-                    slot.isAvailable
-                      ? "text-primary font-semibold"
-                      : "text-muted-foreground line-through"
+                    "flex flex-col items-center p-3 rounded-lg border text-sm transition-all",
+                    !isDisabled
+                      ? selectedSlotId === slot.timeSlotId
+                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                        : "border-border hover:border-primary hover:bg-primary/5 cursor-pointer"
+                      : "border-border bg-muted/50 opacity-50 cursor-not-allowed"
                   )}
                 >
-                  {formatPrice(slot.price)}
-                </span>
-                {!slot.isAvailable && (
-                  <Badge
-                    variant="outline"
-                    className="mt-1 text-[10px] px-1.5 py-0"
+                  <span className="font-medium">
+                    {slot.startTime} - {slot.endTime}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-xs mt-1",
+                      !isDisabled
+                        ? "text-primary font-semibold"
+                        : "text-muted-foreground line-through"
+                    )}
                   >
-                    Đã đặt
-                  </Badge>
-                )}
-              </button>
-            ))}
+                    {formatPrice(slot.price)}
+                  </span>
+                  {!slot.isAvailable && (
+                    <Badge
+                      variant="outline"
+                      className="mt-1 text-[10px] px-1.5 py-0"
+                    >
+                      {slot.bookedByName || "Đã đặt"}
+                    </Badge>
+                  )}
+                  {isPast && slot.isAvailable && (
+                    <Badge
+                      variant="outline"
+                      className="mt-1 text-[10px] px-1.5 py-0 bg-muted"
+                    >
+                      Đã qua
+                    </Badge>
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </CardContent>

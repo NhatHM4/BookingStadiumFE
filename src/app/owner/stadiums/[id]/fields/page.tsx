@@ -104,9 +104,8 @@ export default function ManageFieldsPage({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`h-3 w-3 rounded-full ${
-                        field.isActive ? "bg-green-500" : "bg-red-500"
-                      }`}
+                      className={`h-3 w-3 rounded-full ${field.isActive ? "bg-green-500" : "bg-red-500"
+                        }`}
                     />
                     <div>
                       <h3 className="font-semibold">{field.name}</h3>
@@ -192,12 +191,12 @@ function FieldFormDialog({
     resolver: zodResolver(fieldSchema),
     defaultValues: field
       ? {
-          name: field.name,
-          fieldType: field.fieldType,
-          defaultPrice: field.defaultPrice,
-          parentFieldId: field.parentFieldId ?? null,
-        }
-      : { name: "", defaultPrice: 0, parentFieldId: null },
+        name: field.name,
+        fieldType: field.fieldType,
+        defaultPrice: field.defaultPrice,
+        parentFieldId: field.parentFieldId ?? null,
+      }
+      : { name: "", fieldType: "", defaultPrice: 0, parentFieldId: null },
   });
 
   const onSubmit = async (data: FieldFormData) => {
@@ -259,7 +258,7 @@ function FieldFormDialog({
               name="fieldType"
               control={control}
               render={({ field: f }) => (
-                <Select value={f.value} onValueChange={(v) => f.onChange(v ?? "")}>
+                <Select value={f.value || ""} onValueChange={(v) => f.onChange(v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn loại sân" />
                   </SelectTrigger>

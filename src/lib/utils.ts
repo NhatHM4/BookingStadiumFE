@@ -63,6 +63,7 @@ export function getImageUrl(path: string | null | undefined): string | null {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   // Proxy through Next.js to avoid private IP issues with Image Optimization
   const cleanPath = path.startsWith("/") ? path.slice(1) : `uploads/${path}`;
+  console.log("getImageUrl:", cleanPath);
   return `/api/${cleanPath}`;
 }
 
