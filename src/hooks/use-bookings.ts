@@ -3,6 +3,7 @@ import {
   createBooking,
   getMyBookings,
   getBooking,
+  lookupBooking,
   cancelBooking,
   createDeposit,
   getBookingDeposits,
@@ -39,6 +40,16 @@ export function useBooking(id: number) {
     queryFn: () => getBooking(id),
     select: (res) => res.data,
     enabled: !!id,
+  });
+}
+
+export function useLookupBooking(bookingCode: string) {
+  return useQuery({
+    queryKey: ["booking-lookup", bookingCode],
+    queryFn: () => lookupBooking(bookingCode),
+    select: (res) => res.data,
+    enabled: !!bookingCode,
+    retry: false,
   });
 }
 

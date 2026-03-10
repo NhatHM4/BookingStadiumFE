@@ -27,6 +27,13 @@ export async function createGuestBooking(
   return res.data;
 }
 
+export async function lookupBooking(
+  bookingCode: string
+): Promise<ApiResponse<BookingResponse>> {
+  const res = await apiClient.get(`/bookings/lookup?bookingCode=${encodeURIComponent(bookingCode)}`);
+  return res.data;
+}
+
 export async function getMyBookings(
   status?: BookingStatus,
   page = 0,

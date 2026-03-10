@@ -27,3 +27,11 @@
      + Đã đăng nhập → chuyển đến /bookings/new (đặt sân thường)
      + Chưa đăng nhập → chuyển đến /bookings/guest (đặt sân khách)
    - Types: GuestBookingRequest, BookingResponse updated với guest fields
+
+5. ✅ Tra cứu đơn đặt sân theo mã (không cần đăng nhập) - API 7.4
+   - Trang /bookings/lookup cho phép tra cứu booking bằng mã bookingCode
+   - API: GET /api/v1/bookings/lookup?bookingCode=xxx (Public)
+   - Hiển thị đầy đủ: trạng thái, thông tin sân, giờ, giá, cọc, thông tin khách
+   - Sau khi đặt sân khách thành công → nút "Tra cứu đơn đặt sân" tự điền mã
+   - Route public, không cần đăng nhập
+   - Thêm tab "Tra cứu đơn" ở Header (hiển thị cho tất cả user)

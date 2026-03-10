@@ -188,11 +188,11 @@ function GuestBookingContent() {
                             </ul>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                            <Link href="/stadiums">
-                                <Button>Tìm sân khác</Button>
+                            <Link href={`/bookings/lookup?code=${bookingResult.bookingCode}`}>
+                                <Button>Tra cứu đơn đặt sân</Button>
                             </Link>
-                            <Link href="/login">
-                                <Button variant="outline">Đăng nhập để quản lý</Button>
+                            <Link href="/stadiums">
+                                <Button variant="outline">Tìm sân khác</Button>
                             </Link>
                         </div>
                     </CardContent>

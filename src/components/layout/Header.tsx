@@ -8,6 +8,7 @@ import {
   Trophy,
   CalendarDays,
   Swords,
+  FileSearch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -17,6 +18,7 @@ import { useState } from "react";
 const publicLinks = [
   { href: "/stadiums", label: "Tìm sân", icon: MapPin },
   { href: "/matches", label: "Ráp kèo", icon: Swords },
+  { href: "/bookings/lookup", label: "Tra cứu đơn", icon: FileSearch },
 ];
 
 const customerLinks = [
