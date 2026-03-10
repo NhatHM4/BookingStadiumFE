@@ -88,6 +88,7 @@ export default function MatchDetailPage({
 
   const [respondOpen, setRespondOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("");
+  const [joinAsGuest, setJoinAsGuest] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -119,15 +120,15 @@ export default function MatchDetailPage({
   );
 
   const handleSendResponse = async () => {
-    if (!selectedTeam) {
-      toast.error("Chọn đội để ứng tuyển");
+    if (!joinAsGuest && !selectedTeam) {
+      toast.error("Chọn đội hoặc tham gia với tư cách cá nhân");
       return;
     }
     try {
       await sendResponse.mutateAsync({
         matchId,
         data: {
-          teamId: parseInt(selectedTeam),
+          ...(joinAsGuest ? {} : { teamId: parseInt(selectedTeam) }),
           message: responseMessage || undefined,
         },
       });
@@ -135,6 +136,7 @@ export default function MatchDetailPage({
       setRespondOpen(false);
       setResponseMessage("");
       setSelectedTeam("");
+      setJoinAsGuest(false);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || "Gửi yêu cầu thất bại");
@@ -441,24 +443,50 @@ export default function MatchDetailPage({
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Chọn đội *</Label>
-                  <Select
-                    value={selectedTeam}
-                    onValueChange={(v) => setSelectedTeam(v ?? "")}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn đội..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {myTeams?.map((team) => (
-                        <SelectItem key={team.id} value={String(team.id)}>
-                          {team.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="joinAsGuest"
+                    checked={joinAsGuest}
+                    onChange={(e) => {
+                      setJoinAsGuest(e.target.checked);
+                      if (e.target.checked) setSelectedTeam("");
+                    }}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  <Label htmlFor="joinAsGuest" className="cursor-pointer text-sm">
+                    Tham gia với tư cách cá nhân (không cần đội)
+                  </Label>
                 </div>
+                {!joinAsGuest && (
+                  <div className="space-y-2">
+                    <Label>Chọn đội *</Label>
+                    <Select
+                      value={selectedTeam}
+                      onValueChange={(v) => setSelectedTeam(v ?? "")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn đội..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {myTeams?.map((team) => (
+                          <SelectItem key={team.id} value={String(team.id)}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {(!myTeams || myTeams.length === 0) && (
+                      <p className="text-xs text-muted-foreground">
+                        Bạn chưa có đội nào.{" "}
+                        <Link href="/teams/new" className="text-primary hover:underline">
+                          Tạo đội mới
+                        </Link>{" "}
+                        hoặc tích chọn tham gia cá nhân.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label>Tin nhắn</Label>
                   <Textarea
@@ -477,7 +505,7 @@ export default function MatchDetailPage({
                   Hủy
                 </Button>
                 <Button
-                  disabled={sendResponse.isPending || !selectedTeam}
+                  disabled={sendResponse.isPending || (!joinAsGuest && !selectedTeam)}
                   onClick={handleSendResponse}
                 >
                   {sendResponse.isPending && (

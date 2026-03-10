@@ -6,6 +6,11 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
 
+  // Skip middleware for API routes completely
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   // Public routes - no protection needed
   const publicRoutes = ["/", "/login", "/register", "/stadiums", "/matches"];
   const isPublicRoute = publicRoutes.some(
@@ -62,6 +67,14 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|images).*)",
+    /*
+     * Match all request paths except:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - images (public images)
+     */
+    "/((?!api/|_next/static|_next/image|favicon.ico|images).*)",
   ],
 };

@@ -87,6 +87,7 @@ export enum SkillLevel {
 }
 
 export enum CostSharing {
+  WIN_LOSE = "WIN_LOSE",
   EQUAL_SPLIT = "EQUAL_SPLIT",
   HOST_PAY = "HOST_PAY",
   OPPONENT_PAY = "OPPONENT_PAY",
@@ -174,8 +175,9 @@ export const DepositTransactionStatusLabel: Record<DepositTransactionStatus, str
 };
 
 export const CostSharingLabel: Record<CostSharing, string> = {
+  [CostSharing.WIN_LOSE]: "Thắng/Thua (70/30)",
   [CostSharing.EQUAL_SPLIT]: "Chia đều",
-  [CostSharing.HOST_PAY]: "Chủ sân trả",
+  [CostSharing.HOST_PAY]: "Chủ kèo trả",
   [CostSharing.OPPONENT_PAY]: "Đối thủ trả",
   [CostSharing.CUSTOM]: "Tùy chỉnh",
 };

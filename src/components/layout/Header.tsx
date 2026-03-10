@@ -21,6 +21,7 @@ const publicLinks = [
 
 const customerLinks = [
   { href: "/bookings", label: "Đặt sân", icon: CalendarDays },
+  { href: "/matches/my", label: "Trận đấu", icon: CalendarDays },
   { href: "/teams", label: "Đội bóng", icon: Trophy },
 ];
 

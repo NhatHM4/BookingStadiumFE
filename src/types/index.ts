@@ -156,6 +156,22 @@ export interface BookingRequest {
   bookingDate: string;
   note?: string;
   isMatchRequest?: boolean;
+  // Match request fields (only when isMatchRequest = true)
+  // Option 1: Dùng đội có sẵn
+  teamId?: number;
+  // Option 2: Tạo đội nhanh
+  createQuickTeam?: boolean;
+  quickTeamName?: string;
+  quickTeamSkillLevel?: SkillLevel;
+  // Option 3: Không cần đội
+  hostName?: string;
+  contactPhone?: string;
+  // Thông tin chung
+  requiredSkillLevel?: SkillLevel;
+  costSharing?: CostSharing;
+  hostSharePercent?: number;
+  opponentSharePercent?: number;
+  matchMessage?: string;
 }
 
 // ========================

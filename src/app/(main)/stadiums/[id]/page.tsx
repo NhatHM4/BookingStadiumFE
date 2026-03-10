@@ -198,11 +198,10 @@ export default function StadiumDetailPage({
               fields.map((field) => (
                 <Card
                   key={field.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedFieldId === field.id
-                      ? "ring-2 ring-primary"
-                      : ""
-                  }`}
+                  className={`cursor-pointer transition-all hover:shadow-md ${selectedFieldId === field.id
+                    ? "ring-2 ring-primary"
+                    : ""
+                    }`}
                   onClick={() => {
                     setSelectedFieldId(field.id);
                     setActiveTab("slots");
@@ -230,9 +229,8 @@ export default function StadiumDetailPage({
                         </div>
                       </div>
                       <div
-                        className={`h-3 w-3 rounded-full ${
-                          field.isActive ? "bg-green-500" : "bg-red-500"
-                        }`}
+                        className={`h-3 w-3 rounded-full ${field.isActive ? "bg-green-500" : "bg-red-500"
+                          }`}
                         title={field.isActive ? "Đang hoạt động" : "Tạm ngưng"}
                       />
                     </div>
@@ -261,6 +259,7 @@ export default function StadiumDetailPage({
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedFieldId(field.id);
+                        setActiveTab("slots");
                       }}
                     >
                       {selectedFieldId === field.id
