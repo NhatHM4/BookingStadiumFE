@@ -1,175 +1,119 @@
 import Link from "next/link";
-import { MapPin, CalendarDays, Swords, Star, ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSearch } from "@/components/home/HeroSearch";
 
-const features = [
-  {
-    icon: MapPin,
-    title: "Tìm sân nhanh",
-    description: "Tìm sân bóng gần bạn theo khu vực, loại sân và giá cả phù hợp.",
-  },
-  {
-    icon: CalendarDays,
-    title: "Đặt sân dễ dàng",
-    description: "Xem lịch trống, chọn khung giờ và đặt sân chỉ trong vài bước.",
-  },
-  {
-    icon: Swords,
-    title: "Ráp kèo thú vị",
-    description: "Đăng kèo tìm đối thủ hoặc nhận kèo từ các đội khác.",
-  },
-  {
-    icon: Star,
-    title: "Đánh giá sân",
-    description: "Xem đánh giá từ người chơi khác để chọn sân chất lượng nhất.",
-  },
+const quickPoints = [
+  "Đặt sân nhanh trong vài chạm",
+  "Có thể đặt không cần đăng nhập",
+  "Giao diện mượt trên điện thoại",
 ];
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,#f8fffe_0%,#eef8ff_55%,#ffffff_100%)]">
       <Header />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative bg-gradient-to-b from-primary/10 via-background to-background py-20 md:py-32">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-              Đặt sân bóng đá{" "}
-              <span className="text-primary">online</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Nền tảng đặt sân bóng đá trực tuyến #1 Việt Nam. Tìm sân gần
-              bạn, đặt sân nhanh chóng, ráp kèo tìm đối thủ.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/stadiums">
-                <Button size="lg" className="gap-2 text-base px-8">
-                  <MapPin className="h-5 w-5" />
-                  Tìm sân ngay
-                </Button>
-              </Link>
-              <Link href="/stadiums/nearby">
-                <Button variant="outline" size="lg" className="gap-2 text-base px-8">
-                  Sân gần tôi
-                </Button>
-              </Link>
-              <Link href="/register?role=OWNER">
-                <Button variant="outline" size="lg" className="gap-2 text-base px-8">
-                  Đăng ký chủ sân
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <p className="mt-6 text-sm text-muted-foreground">
-              💡 <strong>Mẹo:</strong> Bạn có thể{" "}
-              <Link href="/bookings/guest" className="text-primary underline hover:text-primary/80">
-                đặt sân mà không cần đăng nhập
-              </Link>
-            </p>
-            <HeroSearch />
-          </div>
-        </section>
+        <section className="relative overflow-hidden py-16 md:py-24">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(56,189,248,0.2),transparent_40%),radial-gradient(circle_at_85%_15%,rgba(250,204,21,0.18),transparent_32%),radial-gradient(circle_at_50%_100%,rgba(74,222,128,0.16),transparent_35%)]" />
 
-        {/* Features Section */}
-        <section className="py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold">Tại sao chọn BookingStadium?</h2>
-              <p className="mt-3 text-muted-foreground">
-                Giải pháp toàn diện cho việc đặt sân bóng đá
+          <div className="container relative mx-auto px-4">
+            <div className="mx-auto max-w-3xl text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/85 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-sky-700 shadow-sm">
+                <Sparkles className="h-4 w-4" />
+                BookingStadium
+              </div>
+
+              <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+                Đặt sân bóng đơn giản,
+                <span className="block bg-gradient-to-r from-sky-600 to-emerald-500 bg-clip-text text-transparent">
+                  nhanh và rõ ràng
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg">
+                Chỉ giữ lại những gì cần thiết để bạn tìm sân và chốt lịch thật nhanh.
+              </p>
+
+              <HeroSearch />
+
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link href="/stadiums">
+                  <Button
+                    size="lg"
+                    className="h-11 gap-2 rounded-xl bg-sky-600 px-6 text-white shadow-md hover:bg-sky-700"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Xem danh sách sân
+                  </Button>
+                </Link>
+                <Link href="/stadiums/nearby">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="h-11 rounded-xl border-sky-200 bg-white/80 px-6 text-sky-700 hover:bg-sky-50"
+                  >
+                    Sân gần tôi
+                  </Button>
+                </Link>
+              </div>
+
+              <p className="mt-5 text-sm text-slate-600">
+                Có thể{" "}
+                <Link
+                  href="/bookings/guest"
+                  className="font-semibold text-sky-700 underline-offset-4 hover:underline"
+                >
+                  đặt sân không cần đăng nhập
+                </Link>
+                .
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature) => (
-                <Card
-                  key={feature.title}
-                  className="text-center hover:shadow-lg transition-shadow"
-                >
-                  <CardContent className="pt-6">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <feature.icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="font-semibold text-lg">{feature.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {feature.description}
-                    </p>
+
+            <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
+              {quickPoints.map((point) => (
+                <Card key={point} className="border-sky-100 bg-white/80 shadow-sm backdrop-blur">
+                  <CardContent className="flex items-center gap-2 px-4 py-4 text-sm text-slate-700">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                    {point}
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </div>
-        </section>
 
-        {/* How it works */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold">Đặt sân chỉ 3 bước</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  step: "1",
-                  title: "Tìm sân",
-                  description:
-                    "Tìm kiếm sân theo khu vực, loại sân (5/7/11 người) và giá cả.",
-                },
-                {
-                  step: "2",
-                  title: "Chọn giờ & Đặt sân",
-                  description:
-                    "Xem lịch trống, chọn khung giờ phù hợp và xác nhận đặt sân.",
-                },
-                {
-                  step: "3",
-                  title: "Đặt cọc & Chơi bóng",
-                  description:
-                    "Đặt cọc qua chuyển khoản/MoMo/ZaloPay và đến sân đúng giờ.",
-                },
-              ].map((item) => (
-                <div key={item.step} className="text-center">
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
-                    {item.step}
-                  </div>
-                  <h3 className="text-lg font-semibold">{item.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+            <Card className="mx-auto mt-8 max-w-3xl border-amber-100 bg-[linear-gradient(120deg,#ffffff_0%,#fff9e8_100%)] shadow-sm">
+              <CardContent className="flex flex-col items-start justify-between gap-4 px-6 py-5 sm:flex-row sm:items-center">
+                <p className="text-sm text-slate-700">
+                  Bạn là chủ sân? Đăng ký để quản lý lịch sân và nhận booking trực tuyến.
+                </p>
+                <Link href="/register?role=OWNER">
+                  <Button
+                    variant="ghost"
+                    className="h-10 gap-2 rounded-xl px-3 text-amber-700 hover:bg-amber-100/60"
+                  >
+                    Trở thành chủ sân
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
 
-        {/* CTA */}
-        <section className="py-20 bg-primary text-primary-foreground">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold">Bắt đầu đặt sân ngay hôm nay!</h2>
-            <p className="mt-4 text-lg opacity-90">
-              Hàng trăm sân bóng đang chờ bạn. Đăng ký miễn phí.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="mt-8 text-center">
               <Link href="/register">
                 <Button
                   size="lg"
-                  variant="secondary"
-                  className="text-base px-8"
+                  className="h-11 rounded-xl bg-emerald-600 px-6 text-white hover:bg-emerald-700"
                 >
                   Đăng ký miễn phí
-                </Button>
-              </Link>
-              <Link href="/stadiums">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-base px-8 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
-                >
-                  Xem danh sách sân
                 </Button>
               </Link>
             </div>
