@@ -65,3 +65,19 @@
    - Booking ráp kèo (`/bookings/new`):
      + SĐT liên hệ được auto-fill từ đội đã chọn hoặc SĐT user đăng nhập
      + User vẫn có thể sửa tay và hệ thống tôn trọng giá trị nhập thủ công
+
+9. ✅ Đồng bộ changelog 14/04/2026 (Team + Match Response)
+   - Team API:
+     + Form tạo/sửa đội bắt buộc `phone`
+     + Form thêm member đổi từ `email` sang `{ name, phone? }` (phone optional)
+     + Remove/chuyển captain dùng `memberId` trong path
+   - Team response model:
+     + `TeamResponse` có `phone`
+     + `TeamMemberResponse` có `name`, `phone` và giữ `userId/userName/userEmail` nullable để tương thích ngược
+   - Match response API (`POST /match-requests/{id}/responses`):
+     + FE gửi `joinType` = `TEAM | INDIVIDUAL`
+     + `TEAM` yêu cầu `teamId`, `contactPhone` optional
+     + `INDIVIDUAL` không cần `teamId`, có chọn dùng SĐT tài khoản hoặc nhập SĐT mới
+   - UI nhận kèo:
+     + Cập nhật ở trang Home (`OpenMatchesSection`) và trang chi tiết kèo (`/matches/[id]`)
+     + Hiển thị được cả response cá nhân (không có team), gồm tên người nhận kèo + SĐT liên hệ (nếu có)

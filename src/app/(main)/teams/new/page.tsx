@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -26,17 +28,27 @@ import { Controller } from "react-hook-form";
 
 export default function CreateTeamPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const createTeam = useCreateTeam();
 
   const {
     register,
     handleSubmit,
     control,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<TeamFormData>({
     resolver: zodResolver(teamSchema),
     defaultValues: { name: "", phone: "" },
   });
+
+  useEffect(() => {
+    const sessionPhone = session?.user?.phone?.trim();
+    if (!sessionPhone) return;
+    if (getValues("phone")) return;
+    setValue("phone", sessionPhone, { shouldDirty: false, shouldValidate: true });
+  }, [session?.user?.phone, getValues, setValue]);
 
   const onSubmit = async (data: TeamFormData) => {
     try {

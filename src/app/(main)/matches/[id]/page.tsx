@@ -3,7 +3,6 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Swords,
@@ -17,7 +16,6 @@ import {
   XCircle,
   Ban,
   Loader2,
-  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,8 +51,7 @@ import {
   FieldTypeLabel,
   SkillLevelLabel,
   CostSharingLabel,
-  MatchStatusLabel,
-  MatchResponseStatusLabel,
+  JoinType,
   MatchStatus,
   MatchResponseStatus,
 } from "@/types/enums";
@@ -76,7 +73,6 @@ export default function MatchDetailPage({
   const { id } = use(params);
   const matchId = parseInt(id, 10);
   const { data: session } = useSession();
-  const router = useRouter();
 
   const { data: match, isLoading } = useMatchRequest(matchId);
   const { data: myTeams } = useMyTeams();
@@ -88,11 +84,11 @@ export default function MatchDetailPage({
 
   const [respondOpen, setRespondOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("");
-  const [joinAsGuest, setJoinAsGuest] = useState(false);
+  const [joinType, setJoinType] = useState<JoinType>(JoinType.TEAM);
+  const [phoneMode, setPhoneMode] = useState<"SESSION" | "CUSTOM">("SESSION");
+  const [contactPhone, setContactPhone] = useState("");
   const [responseMessage, setResponseMessage] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
-
-  const currentUserId = session?.user?.id ? parseInt(session.user.id) : null;
 
   if (isLoading) {
     return (
@@ -120,15 +116,30 @@ export default function MatchDetailPage({
   );
 
   const handleSendResponse = async () => {
-    if (!joinAsGuest && !selectedTeam) {
-      toast.error("Chọn đội hoặc tham gia với tư cách cá nhân");
+    if (joinType === JoinType.TEAM && !selectedTeam) {
+      toast.error("Vui lòng chọn đội");
+      return;
+    }
+    const sessionPhone = session?.user?.phone?.trim() ?? "";
+    const selectedTeamPhone =
+      myTeams?.find((team) => String(team.id) === selectedTeam)?.phone?.trim() ?? "";
+    const resolvedPhone =
+      joinType === JoinType.INDIVIDUAL
+        ? phoneMode === "SESSION"
+          ? sessionPhone
+          : contactPhone.trim()
+        : selectedTeamPhone;
+    if (joinType === JoinType.INDIVIDUAL && !resolvedPhone) {
+      toast.error("Bạn cần nhập số điện thoại liên hệ");
       return;
     }
     try {
       await sendResponse.mutateAsync({
         matchId,
         data: {
-          ...(joinAsGuest ? {} : { teamId: parseInt(selectedTeam) }),
+          joinType,
+          ...(joinType === JoinType.TEAM ? { teamId: parseInt(selectedTeam) } : {}),
+          ...(resolvedPhone ? { contactPhone: resolvedPhone } : {}),
           message: responseMessage || undefined,
         },
       });
@@ -136,7 +147,9 @@ export default function MatchDetailPage({
       setRespondOpen(false);
       setResponseMessage("");
       setSelectedTeam("");
-      setJoinAsGuest(false);
+      setJoinType(JoinType.TEAM);
+      setPhoneMode("SESSION");
+      setContactPhone("");
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || "Gửi yêu cầu thất bại");
@@ -179,6 +192,9 @@ export default function MatchDetailPage({
       toast.error("Rút yêu cầu thất bại");
     }
   };
+
+  const sessionPhone = session?.user?.phone?.trim() ?? "";
+  const canUseSessionPhone = !!sessionPhone;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -361,7 +377,14 @@ export default function MatchDetailPage({
                         </div>
                       )}
                       <div>
-                        <p className="font-medium text-sm">{resp.teamName}</p>
+                        <p className="font-medium text-sm">
+                          {resp.teamName || resp.responderUserName || "Người chơi cá nhân"}
+                        </p>
+                        {resp.contactPhone && (
+                          <p className="text-xs text-muted-foreground">
+                            Liên hệ: {resp.contactPhone}
+                          </p>
+                        )}
                         {resp.message && (
                           <p className="text-xs text-muted-foreground">
                             {resp.message}
@@ -443,22 +466,28 @@ export default function MatchDetailPage({
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="joinAsGuest"
-                    checked={joinAsGuest}
-                    onChange={(e) => {
-                      setJoinAsGuest(e.target.checked);
-                      if (e.target.checked) setSelectedTeam("");
+                <div className="space-y-2">
+                  <Label>Hình thức tham gia</Label>
+                  <Select
+                    value={joinType}
+                    onValueChange={(value) => {
+                      const nextType = value as JoinType;
+                      setJoinType(nextType);
+                      if (nextType === JoinType.INDIVIDUAL) setSelectedTeam("");
                     }}
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <Label htmlFor="joinAsGuest" className="cursor-pointer text-sm">
-                    Tham gia với tư cách cá nhân (không cần đội)
-                  </Label>
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn hình thức..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={JoinType.TEAM}>Theo đội</SelectItem>
+                      <SelectItem value={JoinType.INDIVIDUAL}>
+                        Cá nhân (không cần đội)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                {!joinAsGuest && (
+                {joinType === JoinType.TEAM && (
                   <div className="space-y-2">
                     <Label>Chọn đội *</Label>
                     <Select
@@ -487,6 +516,53 @@ export default function MatchDetailPage({
                     )}
                   </div>
                 )}
+                {joinType === JoinType.INDIVIDUAL && (
+                  <div className="space-y-2">
+                    <Label>Số điện thoại liên hệ *</Label>
+                    <div className="space-y-2 rounded-md border p-3">
+                      {canUseSessionPhone && (
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="phoneModeMatchDetail"
+                            checked={phoneMode === "SESSION"}
+                            onChange={() => setPhoneMode("SESSION")}
+                          />
+                          Dùng số tài khoản: {sessionPhone}
+                        </label>
+                      )}
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="phoneModeMatchDetail"
+                          checked={phoneMode === "CUSTOM"}
+                          onChange={() => setPhoneMode("CUSTOM")}
+                        />
+                        Nhập số khác
+                      </label>
+                      {phoneMode === "CUSTOM" && (
+                        <Input
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder="Nhập số điện thoại"
+                          inputMode="tel"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+                {joinType === JoinType.TEAM && (
+                  <div className="space-y-2">
+                    <Label>Số điện thoại liên hệ</Label>
+                    <Input
+                      value={
+                        myTeams?.find((team) => String(team.id) === selectedTeam)?.phone ?? ""
+                      }
+                      readOnly
+                      placeholder="Chọn đội để tự động lấy SĐT"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label>Tin nhắn</Label>
                   <Textarea
@@ -505,7 +581,10 @@ export default function MatchDetailPage({
                   Hủy
                 </Button>
                 <Button
-                  disabled={sendResponse.isPending || (!joinAsGuest && !selectedTeam)}
+                  disabled={
+                    sendResponse.isPending ||
+                    (joinType === JoinType.TEAM && !selectedTeam)
+                  }
                   onClick={handleSendResponse}
                 >
                   {sendResponse.isPending && (

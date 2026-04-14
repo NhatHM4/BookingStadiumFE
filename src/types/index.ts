@@ -14,6 +14,7 @@ import {
   CostSharing,
   MatchStatus,
   MatchResponseStatus,
+  JoinType,
   TeamMemberRole,
   TeamMemberStatus,
 } from "./enums";
@@ -395,8 +396,12 @@ export interface MatchRequestRequest {
 export interface MatchResponseResponse {
   id: number;
   matchRequestId: number;
-  teamId: number;
-  teamName: string;
+  joinType: JoinType;
+  contactPhone: string | null;
+  responderUserId: number | null;
+  responderUserName: string | null;
+  teamId: number | null;
+  teamName: string | null;
   teamLogoUrl: string | null;
   message: string | null;
   status: MatchResponseStatus;
@@ -405,7 +410,9 @@ export interface MatchResponseResponse {
 }
 
 export interface MatchResponseRequest {
+  joinType: JoinType;
   teamId?: number;
+  contactPhone?: string;
   message?: string;
 }
 

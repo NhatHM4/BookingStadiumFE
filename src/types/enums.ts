@@ -109,6 +109,11 @@ export enum MatchResponseStatus {
   WITHDRAWN = "WITHDRAWN",
 }
 
+export enum JoinType {
+  TEAM = "TEAM",
+  INDIVIDUAL = "INDIVIDUAL",
+}
+
 export enum TeamMemberRole {
   CAPTAIN = "CAPTAIN",
   MEMBER = "MEMBER",
@@ -175,7 +180,7 @@ export const DepositTransactionStatusLabel: Record<DepositTransactionStatus, str
 };
 
 export const CostSharingLabel: Record<CostSharing, string> = {
-  [CostSharing.WIN_LOSE]: "Thắng/Thua (70/30)",
+  [CostSharing.WIN_LOSE]: "Thắng/Thua (30/70)",
   [CostSharing.EQUAL_SPLIT]: "Chia đều",
   [CostSharing.HOST_PAY]: "Chủ kèo trả",
   [CostSharing.OPPONENT_PAY]: "Đối thủ trả",

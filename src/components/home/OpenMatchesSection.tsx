@@ -40,6 +40,7 @@ import { useMyTeams } from "@/hooks/use-teams";
 import {
   CostSharingLabel,
   FieldTypeLabel,
+  JoinType,
   MatchStatus,
   SkillLevelLabel,
 } from "@/types/enums";
@@ -60,7 +61,9 @@ export function OpenMatchesSection() {
     null
   );
   const [selectedTeam, setSelectedTeam] = useState("");
-  const [joinAsGuest, setJoinAsGuest] = useState(false);
+  const [joinType, setJoinType] = useState<JoinType>(JoinType.TEAM);
+  const [phoneMode, setPhoneMode] = useState<"SESSION" | "CUSTOM">("SESSION");
+  const [contactPhone, setContactPhone] = useState("");
   const [responseMessage, setResponseMessage] = useState("");
 
   const { data, isLoading } = useOpenMatches({
@@ -105,20 +108,43 @@ export function OpenMatchesSection() {
     setSelectedMatch(match);
     setSelectedTeam("");
     setResponseMessage("");
-    setJoinAsGuest((myTeams?.length ?? 0) === 0);
+    const defaultJoinType =
+      (myTeams?.length ?? 0) > 0 ? JoinType.TEAM : JoinType.INDIVIDUAL;
+    setJoinType(defaultJoinType);
+    const sessionPhone = session?.user?.phone?.trim() ?? "";
+    setPhoneMode(sessionPhone ? "SESSION" : "CUSTOM");
+    setContactPhone("");
   };
 
   const closeJoinDialog = () => {
     setSelectedMatch(null);
     setSelectedTeam("");
     setResponseMessage("");
-    setJoinAsGuest(false);
+    setJoinType(JoinType.TEAM);
+    setPhoneMode("SESSION");
+    setContactPhone("");
   };
 
   const handleSendResponse = async () => {
     if (!selectedMatch) return;
-    if (!joinAsGuest && !selectedTeam) {
-      toast.error("Vui lòng chọn đội hoặc tham gia với tư cách cá nhân");
+    if (joinType === JoinType.TEAM && !selectedTeam) {
+      toast.error("Vui lòng chọn đội");
+      return;
+    }
+    const sessionPhone = session?.user?.phone?.trim() ?? "";
+    const selectedTeamPhone =
+      myTeams?.find((team) => String(team.id) === selectedTeam)?.phone?.trim() ?? "";
+    const resolvedPhone =
+      joinType === JoinType.INDIVIDUAL
+        ? phoneMode === "SESSION"
+          ? sessionPhone
+          : contactPhone.trim()
+        : selectedTeamPhone;
+    if (
+      joinType === JoinType.INDIVIDUAL &&
+      !resolvedPhone
+    ) {
+      toast.error("Bạn cần nhập số điện thoại liên hệ");
       return;
     }
 
@@ -126,7 +152,9 @@ export function OpenMatchesSection() {
       await sendResponse.mutateAsync({
         matchId: selectedMatch.id,
         data: {
-          ...(joinAsGuest ? {} : { teamId: Number(selectedTeam) }),
+          joinType,
+          ...(joinType === JoinType.TEAM ? { teamId: Number(selectedTeam) } : {}),
+          ...(resolvedPhone ? { contactPhone: resolvedPhone } : {}),
           message: responseMessage.trim() || undefined,
         },
       });
@@ -137,6 +165,9 @@ export function OpenMatchesSection() {
       toast.error(err.response?.data?.message || "Nhận kèo thất bại");
     }
   };
+
+  const sessionPhone = session?.user?.phone?.trim() ?? "";
+  const canUseSessionPhone = !!sessionPhone;
 
   return (
     <section className="mt-12">
@@ -326,23 +357,25 @@ export function OpenMatchesSection() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="joinAsGuestHome"
-                checked={joinAsGuest}
-                onChange={(e) => {
-                  setJoinAsGuest(e.target.checked);
-                  if (e.target.checked) setSelectedTeam("");
-                }}
-                className="h-4 w-4 rounded border-border"
-              />
-              <Label htmlFor="joinAsGuestHome" className="cursor-pointer text-sm">
-                Tham gia cá nhân (không cần đội)
-              </Label>
+            <div className="space-y-2">
+              <Label>Hình thức tham gia</Label>
+              <Select
+                value={joinType}
+                onValueChange={(value) => setJoinType(value as JoinType)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn hình thức..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={JoinType.TEAM}>Theo đội</SelectItem>
+                  <SelectItem value={JoinType.INDIVIDUAL}>
+                    Cá nhân (không cần đội)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {!joinAsGuest && (
+            {joinType === JoinType.TEAM && (
               <div className="space-y-2">
                 <Label>Chọn đội *</Label>
                 <Select
@@ -369,6 +402,55 @@ export function OpenMatchesSection() {
               </div>
             )}
 
+            {joinType === JoinType.INDIVIDUAL && (
+              <div className="space-y-2">
+                <Label>Số điện thoại liên hệ *</Label>
+                <div className="space-y-2 rounded-md border border-slate-200 p-3">
+                  {canUseSessionPhone && (
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="radio"
+                        name="phoneModeHome"
+                        checked={phoneMode === "SESSION"}
+                        onChange={() => setPhoneMode("SESSION")}
+                      />
+                      Dùng số tài khoản: {sessionPhone}
+                    </label>
+                  )}
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="phoneModeHome"
+                      checked={phoneMode === "CUSTOM"}
+                      onChange={() => setPhoneMode("CUSTOM")}
+                    />
+                    Nhập số khác
+                  </label>
+                  {phoneMode === "CUSTOM" && (
+                    <Input
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      placeholder="Nhập số điện thoại"
+                      inputMode="tel"
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {joinType === JoinType.TEAM && (
+              <div className="space-y-2">
+                <Label>Số điện thoại liên hệ</Label>
+                <Input
+                  value={
+                    myTeams?.find((team) => String(team.id) === selectedTeam)?.phone ?? ""
+                  }
+                  readOnly
+                  placeholder="Chọn đội để tự động lấy SĐT"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Tin nhắn (tuỳ chọn)</Label>
               <Textarea
@@ -386,7 +468,10 @@ export function OpenMatchesSection() {
             </Button>
             <Button
               onClick={handleSendResponse}
-              disabled={sendResponse.isPending || (!joinAsGuest && !selectedTeam)}
+              disabled={
+                sendResponse.isPending ||
+                (joinType === JoinType.TEAM && !selectedTeam)
+              }
             >
               {sendResponse.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
