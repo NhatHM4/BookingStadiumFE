@@ -76,6 +76,7 @@ export interface FieldResponse {
   name: string;
   fieldType: FieldType;
   defaultPrice: number;
+  imageUrl: string | null;
   isActive: boolean;
   parentFieldId: number | null;
   childFieldCount: number;
@@ -85,6 +86,7 @@ export interface FieldRequest {
   name: string;
   fieldType: FieldType;
   defaultPrice: number;
+  imageUrl?: string;
   parentFieldId?: number | null;
 }
 
@@ -293,6 +295,7 @@ export interface RecurringBookingRequest {
 export interface TeamResponse {
   id: number;
   name: string;
+  phone: string;
   logoUrl: string | null;
   description: string | null;
   preferredFieldType: FieldType | null;
@@ -311,9 +314,11 @@ export interface TeamMemberResponse {
   id: number;
   teamId: number;
   teamName: string;
-  userId: number;
-  userName: string;
-  userEmail: string;
+  name: string;
+  phone: string | null;
+  userId: number | null;
+  userName: string | null;
+  userEmail: string | null;
   role: TeamMemberRole;
   status: TeamMemberStatus;
   joinedAt: string | null;
@@ -322,6 +327,7 @@ export interface TeamMemberResponse {
 
 export interface TeamRequest {
   name: string;
+  phone: string;
   logoUrl?: string;
   description?: string;
   preferredFieldType?: FieldType;
@@ -331,7 +337,8 @@ export interface TeamRequest {
 }
 
 export interface AddMemberRequest {
-  email: string;
+  name: string;
+  phone?: string;
 }
 
 // ========================

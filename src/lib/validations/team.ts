@@ -5,6 +5,11 @@ export const teamSchema = z.object({
     .string()
     .min(2, "Tên đội tối thiểu 2 ký tự")
     .max(100, "Tên đội tối đa 100 ký tự"),
+  phone: z
+    .string()
+    .min(10, "SĐT tối thiểu 10 số")
+    .max(15, "SĐT tối đa 15 số")
+    .regex(/^[0-9+()\-\s]+$/, "SĐT không hợp lệ"),
   logoUrl: z
     .string()
     .url("URL logo không hợp lệ")
@@ -24,7 +29,14 @@ export const teamSchema = z.object({
 export type TeamFormData = z.infer<typeof teamSchema>;
 
 export const addMemberSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
+  name: z.string().min(2, "Tên thành viên tối thiểu 2 ký tự"),
+  phone: z
+    .string()
+    .min(10, "SĐT tối thiểu 10 số")
+    .max(15, "SĐT tối đa 15 số")
+    .regex(/^[0-9+()\-\s]+$/, "SĐT không hợp lệ")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type AddMemberFormData = z.infer<typeof addMemberSchema>;

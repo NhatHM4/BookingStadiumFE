@@ -59,18 +59,18 @@ export async function inviteMember(
 
 export async function removeMember(
   teamId: number,
-  userId: number
+  memberId: number
 ): Promise<ApiResponse<void>> {
-  const res = await apiClient.put(`/teams/${teamId}/members/${userId}/remove`);
+  const res = await apiClient.put(`/teams/${teamId}/members/${memberId}/remove`);
   return res.data;
 }
 
 export async function transferCaptain(
   teamId: number,
-  userId: number
+  memberId: number
 ): Promise<ApiResponse<void>> {
   const res = await apiClient.put(
-    `/teams/${teamId}/members/${userId}/captain`
+    `/teams/${teamId}/members/${memberId}/captain`
   );
   return res.data;
 }

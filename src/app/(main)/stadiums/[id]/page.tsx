@@ -209,6 +209,17 @@ export default function StadiumDetailPage({
                     setActiveTab("slots");
                   }}
                 >
+                  {field.imageUrl && (
+                    <div className="relative h-36 w-full overflow-hidden rounded-t-xl bg-muted">
+                      <Image
+                        src={getImageUrl(field.imageUrl)!}
+                        alt={field.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    </div>
+                  )}
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-3">
                       <div>

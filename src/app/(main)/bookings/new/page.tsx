@@ -1,8 +1,9 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -25,11 +26,10 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { useStadium, useFields, useAvailableSlots } from "@/hooks/use-stadiums";
+import { useAvailableSlots } from "@/hooks/use-stadiums";
 import { useCreateBooking } from "@/hooks/use-bookings";
 import { useMyTeams } from "@/hooks/use-teams";
 import {
-  FieldTypeLabel,
   SkillLevelLabel,
   CostSharingLabel,
   CostSharing,
@@ -39,18 +39,18 @@ import { formatPrice, formatDate } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { SlotPicker } from "@/components/booking/SlotPicker";
 import { toast } from "sonner";
-import type { AvailableSlotResponse, FieldResponse } from "@/types/index";
+import type { AvailableSlotResponse, BookingRequest } from "@/types/index";
 
 function BookingContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const { data: session } = useSession();
 
   const fieldIdParam = searchParams.get("fieldId");
   const timeSlotIdParam = searchParams.get("timeSlotId");
   const dateParam = searchParams.get("date");
 
   // If we have all params we come from stadium detail, otherwise user needs to pick
-  const [selectedFieldId, setSelectedFieldId] = useState<number | null>(
+  const [selectedFieldId] = useState<number | null>(
     fieldIdParam ? parseInt(fieldIdParam, 10) : null
   );
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -70,6 +70,7 @@ function BookingContent() {
   const [opponentSharePercent, setOpponentSharePercent] = useState("30");
   const [matchMessage, setMatchMessage] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [isContactPhoneTouched, setIsContactPhoneTouched] = useState(false);
   const [step, setStep] = useState<"select" | "confirm" | "success">(
     fieldIdParam && timeSlotIdParam && dateParam ? "confirm" : "select"
   );
@@ -88,6 +89,18 @@ function BookingContent() {
   // Determine stadiumId from fields or from selectedFieldId
   const createBooking = useCreateBooking();
   const { data: myTeams } = useMyTeams();
+  const userPhone = session?.user?.phone?.trim() || "";
+
+  const getSuggestedContactPhone = (
+    option: "team" | "quick" | "solo",
+    teamId?: string
+  ) => {
+    if (option === "team") {
+      const selectedTeam = myTeams?.find((team) => String(team.id) === (teamId || selectedTeamId));
+      return selectedTeam?.phone?.trim() || userPhone;
+    }
+    return userPhone;
+  };
 
   // If preFilledSlot is available but selectedSlot is not set, set it
   if (preFilledSlot && !selectedSlot && dateParam) {
@@ -109,7 +122,7 @@ function BookingContent() {
     if (!activeSlot || !selectedFieldId) return;
 
     try {
-      const bookingData: any = {
+      const bookingData: BookingRequest = {
         fieldId: selectedFieldId,
         timeSlotId: activeSlot.slot.timeSlotId,
         bookingDate: activeSlot.date,
@@ -131,7 +144,9 @@ function BookingContent() {
           }
           bookingData.createQuickTeam = true;
           bookingData.quickTeamName = quickTeamName.trim();
-          if (quickTeamSkillLevel) bookingData.quickTeamSkillLevel = quickTeamSkillLevel;
+          if (quickTeamSkillLevel) {
+            bookingData.quickTeamSkillLevel = quickTeamSkillLevel as SkillLevel;
+          }
         } else {
           // solo
           if (!hostName.trim()) {
@@ -147,8 +162,10 @@ function BookingContent() {
         }
         bookingData.contactPhone = contactPhone.trim();
 
-        if (requiredSkillLevel) bookingData.requiredSkillLevel = requiredSkillLevel;
-        if (costSharing) bookingData.costSharing = costSharing;
+        if (requiredSkillLevel) {
+          bookingData.requiredSkillLevel = requiredSkillLevel as SkillLevel;
+        }
+        if (costSharing) bookingData.costSharing = costSharing as CostSharing;
         if (costSharing === CostSharing.CUSTOM) {
           bookingData.hostSharePercent = parseFloat(hostSharePercent);
           bookingData.opponentSharePercent = parseFloat(opponentSharePercent);
@@ -301,7 +318,15 @@ function BookingContent() {
                     type="checkbox"
                     id="matchRequest"
                     checked={isMatchRequest}
-                    onChange={(e) => setIsMatchRequest(e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setIsMatchRequest(checked);
+
+                      if (checked && (!isContactPhoneTouched || !contactPhone.trim())) {
+                        const suggested = getSuggestedContactPhone(matchOption);
+                        if (suggested) setContactPhone(suggested);
+                      }
+                    }}
                     className="h-4 w-4 rounded border-border"
                   />
                   <Label htmlFor="matchRequest" className="cursor-pointer text-sm">
@@ -326,7 +351,13 @@ function BookingContent() {
                         type="button"
                         variant={matchOption === "solo" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setMatchOption("solo")}
+                        onClick={() => {
+                          setMatchOption("solo");
+                          if (!isContactPhoneTouched || !contactPhone.trim()) {
+                            const suggested = getSuggestedContactPhone("solo");
+                            if (suggested) setContactPhone(suggested);
+                          }
+                        }}
                       >
                         Cá nhân
                       </Button>
@@ -334,7 +365,13 @@ function BookingContent() {
                         type="button"
                         variant={matchOption === "team" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setMatchOption("team")}
+                        onClick={() => {
+                          setMatchOption("team");
+                          if (!isContactPhoneTouched || !contactPhone.trim()) {
+                            const suggested = getSuggestedContactPhone("team");
+                            if (suggested) setContactPhone(suggested);
+                          }
+                        }}
                       >
                         Đội có sẵn
                       </Button>
@@ -342,7 +379,13 @@ function BookingContent() {
                         type="button"
                         variant={matchOption === "quick" ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setMatchOption("quick")}
+                        onClick={() => {
+                          setMatchOption("quick");
+                          if (!isContactPhoneTouched || !contactPhone.trim()) {
+                            const suggested = getSuggestedContactPhone("quick");
+                            if (suggested) setContactPhone(suggested);
+                          }
+                        }}
                       >
                         Tạo đội nhanh
                       </Button>
@@ -354,14 +397,24 @@ function BookingContent() {
                   {matchOption === "team" && (
                     <div className="space-y-2">
                       <Label>Chọn đội *</Label>
-                      <Select value={selectedTeamId} onValueChange={(value) => setSelectedTeamId(value || "")}>
+                      <Select
+                        value={selectedTeamId}
+                        onValueChange={(value) => {
+                          const nextTeamId = value || "";
+                          setSelectedTeamId(nextTeamId);
+                          if (!isContactPhoneTouched || !contactPhone.trim()) {
+                            const suggested = getSuggestedContactPhone("team", nextTeamId);
+                            if (suggested) setContactPhone(suggested);
+                          }
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Chọn đội của bạn..." />
                         </SelectTrigger>
                         <SelectContent>
                           {myTeams?.map((team) => (
                             <SelectItem key={team.id} value={String(team.id)}>
-                              {team.name}
+                              {team.name} ({team.phone})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -424,8 +477,16 @@ function BookingContent() {
                     <Input
                       placeholder="0901234567"
                       value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
+                      onChange={(e) => {
+                        setIsContactPhoneTouched(true);
+                        setContactPhone(e.target.value);
+                      }}
                     />
+                    {!isContactPhoneTouched && (
+                      <p className="text-xs text-muted-foreground">
+                        Tự động lấy từ đội đã chọn hoặc tài khoản của bạn
+                      </p>
+                    )}
                   </div>
                   {/* Skill level */}
                   <div className="space-y-2">

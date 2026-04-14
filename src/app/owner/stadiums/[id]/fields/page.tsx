@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useRef, useState } from "react";
 import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,11 +10,14 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  Upload,
+  X,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -36,7 +39,8 @@ import { useFields, useStadium } from "@/hooks/use-stadiums";
 import { useCreateField, useUpdateField, useDeleteField } from "@/hooks/use-owner";
 import { FieldType, FieldTypeLabel } from "@/types/enums";
 import { fieldSchema, type FieldFormData } from "@/lib/validations/owner";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getImageUrl } from "@/lib/utils";
+import { uploadStadiumImage } from "@/lib/api/images";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { toast } from "sonner";
@@ -103,6 +107,17 @@ export default function ManageFieldsPage({
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
+                    {field.imageUrl ? (
+                      <img
+                        src={getImageUrl(field.imageUrl) || undefined}
+                        alt={field.name}
+                        className="h-14 w-20 rounded-md object-cover border"
+                      />
+                    ) : (
+                      <div className="h-14 w-20 rounded-md border bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
                     <div
                       className={`h-3 w-3 rounded-full ${field.isActive ? "bg-green-500" : "bg-red-500"
                         }`}
@@ -175,6 +190,11 @@ function FieldFormDialog({
   const createField = useCreateField();
   const updateField = useUpdateField();
   const isEdit = !!field;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    getImageUrl(field?.imageUrl)
+  );
 
   // Potential parents: fields that have no parent themselves (exclude current field and its children)
   const potentialParents = (fields || []).filter(
@@ -185,7 +205,9 @@ function FieldFormDialog({
     register,
     handleSubmit,
     control,
+    setValue,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FieldFormData>({
     resolver: zodResolver(fieldSchema),
@@ -194,10 +216,53 @@ function FieldFormDialog({
         name: field.name,
         fieldType: field.fieldType,
         defaultPrice: field.defaultPrice,
+        imageUrl: field.imageUrl || "",
         parentFieldId: field.parentFieldId ?? null,
       }
-      : { name: "", fieldType: "", defaultPrice: 0, parentFieldId: null },
+      : { name: "", fieldType: "", defaultPrice: 0, imageUrl: "", parentFieldId: null },
   });
+
+  const currentImageUrl = watch("imageUrl");
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Chỉ chấp nhận file ảnh");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Kích thước file không được vượt quá 5MB");
+      return;
+    }
+
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
+    setUploading(true);
+
+    try {
+      const result = await uploadStadiumImage(file, stadiumId);
+      const path = result.data.path;
+      setValue("imageUrl", path);
+      setPreviewUrl(getImageUrl(path));
+      toast.success("Upload ảnh sân con thành công");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || "Upload ảnh thất bại");
+      setPreviewUrl(getImageUrl(field?.imageUrl));
+      setValue("imageUrl", field?.imageUrl || "");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setValue("imageUrl", "");
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const onSubmit = async (data: FieldFormData) => {
     try {
@@ -208,6 +273,7 @@ function FieldFormDialog({
             name: data.name,
             fieldType: data.fieldType as FieldType,
             defaultPrice: data.defaultPrice,
+            imageUrl: data.imageUrl || undefined,
             parentFieldId: data.parentFieldId ?? null,
           },
         });
@@ -219,11 +285,13 @@ function FieldFormDialog({
             name: data.name,
             fieldType: data.fieldType as FieldType,
             defaultPrice: data.defaultPrice,
+            imageUrl: data.imageUrl || undefined,
             parentFieldId: data.parentFieldId ?? null,
           },
         });
         toast.success("Thêm sân con thành công");
         reset();
+        setPreviewUrl(null);
       }
       onOpenChange(false);
     } catch (error: unknown) {
@@ -281,6 +349,70 @@ function FieldFormDialog({
             <Input type="number" {...register("defaultPrice", { valueAsNumber: true })} />
             {errors.defaultPrice && (
               <p className="text-sm text-destructive">{errors.defaultPrice.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Ảnh sân con (tùy chọn)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <input type="hidden" {...register("imageUrl")} />
+
+            {previewUrl || currentImageUrl ? (
+              <div className="relative">
+                <img
+                  src={previewUrl || getImageUrl(currentImageUrl) || undefined}
+                  alt="Preview sân con"
+                  className="w-full h-44 object-cover rounded-lg border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8"
+                  onClick={handleRemoveImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                {uploading && (
+                  <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-lg">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full h-44 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                {uploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8" />
+                    <span className="text-sm">Nhấn để chọn ảnh sân con</span>
+                    <span className="text-xs">JPG, PNG - Tối đa 5MB</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {(previewUrl || currentImageUrl) && !uploading && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <ImageIcon className="h-4 w-4 mr-1" />
+                Đổi ảnh
+              </Button>
             )}
           </div>
           {potentialParents.length > 0 && (

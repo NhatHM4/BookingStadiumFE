@@ -20,7 +20,8 @@ export const fieldSchema = z.object({
   fieldType: z.enum(["FIVE_A_SIDE", "SEVEN_A_SIDE", "ELEVEN_A_SIDE", ""], {
     message: "Chọn loại sân",
   }),
-  defaultPrice: z.number().min(0, "Giá không hợp lệ"),
+  defaultPrice: z.number().min(1, "Giá phải lớn hơn 0"),
+  imageUrl: z.string().optional().or(z.literal("")),
   parentFieldId: z.number().nullable().optional(),
 });
 

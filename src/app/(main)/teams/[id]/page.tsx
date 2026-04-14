@@ -17,7 +17,7 @@ import {
   LogOut,
   Pencil,
   Loader2,
-  Mail,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,8 +43,6 @@ import { addMemberSchema, type AddMemberFormData } from "@/lib/validations/team"
 import {
   FieldTypeLabel,
   SkillLevelLabel,
-  TeamMemberRoleLabel,
-  TeamMemberStatusLabel,
   TeamMemberStatus,
   TeamMemberRole,
 } from "@/types/enums";
@@ -71,8 +69,8 @@ export default function TeamDetailPage({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: "remove" | "transfer" | "leave";
-    userId?: number;
-    userName?: string;
+    memberId?: number;
+    memberName?: string;
   } | null>(null);
 
   const {
@@ -96,19 +94,25 @@ export default function TeamDetailPage({
 
   const handleInvite = async (data: AddMemberFormData) => {
     try {
-      await inviteMember.mutateAsync({ teamId, data: { email: data.email } });
-      toast.success("Đã gửi lời mời!");
+      await inviteMember.mutateAsync({
+        teamId,
+        data: {
+          name: data.name.trim(),
+          phone: data.phone?.trim() || undefined,
+        },
+      });
+      toast.success("Đã thêm thành viên!");
       reset();
       setInviteOpen(false);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || "Gửi lời mời thất bại");
+      toast.error(err.response?.data?.message || "Thêm thành viên thất bại");
     }
   };
 
-  const handleRemove = async (userId: number) => {
+  const handleRemove = async (memberId: number) => {
     try {
-      await removeMember.mutateAsync({ teamId, userId });
+      await removeMember.mutateAsync({ teamId, memberId });
       toast.success("Đã loại thành viên!");
       setConfirmAction(null);
     } catch {
@@ -116,9 +120,9 @@ export default function TeamDetailPage({
     }
   };
 
-  const handleTransfer = async (userId: number) => {
+  const handleTransfer = async (memberId: number) => {
     try {
-      await transferCaptain.mutateAsync({ teamId, userId });
+      await transferCaptain.mutateAsync({ teamId, memberId });
       toast.success("Đã chuyển đội trưởng!");
       setConfirmAction(null);
     } catch {
@@ -220,6 +224,10 @@ export default function TeamDetailPage({
             {[team.district, team.city].filter(Boolean).join(", ")}
           </span>
         )}
+        <span className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-sm flex items-center gap-1">
+          <Phone className="h-3.5 w-3.5" />
+          {team.phone}
+        </span>
       </div>
 
       {/* Members */}
@@ -236,15 +244,15 @@ export default function TeamDetailPage({
                   render={
                     <Button size="sm">
                       <UserPlus className="h-4 w-4 mr-2" />
-                      Mời thành viên
+                      Thêm thành viên
                     </Button>
                   }
                 />
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Mời thành viên</DialogTitle>
+                    <DialogTitle>Thêm thành viên</DialogTitle>
                     <DialogDescription>
-                      Nhập email người bạn muốn mời vào đội
+                      Nhập tên thành viên, số điện thoại là tùy chọn
                     </DialogDescription>
                   </DialogHeader>
                   <form
@@ -252,18 +260,32 @@ export default function TeamDetailPage({
                     className="space-y-4"
                   >
                     <div className="space-y-2">
-                      <Label>Email *</Label>
+                      <Label>Tên thành viên *</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                          {...register("email")}
-                          placeholder="email@example.com"
+                          {...register("name")}
+                          placeholder="VD: Nguyễn Văn A"
+                        />
+                      </div>
+                      {errors.name && (
+                        <p className="text-sm text-destructive">
+                          {errors.name.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Số điện thoại (tùy chọn)</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          {...register("phone")}
+                          placeholder="VD: 0912345678"
                           className="pl-9"
                         />
                       </div>
-                      {errors.email && (
+                      {errors.phone && (
                         <p className="text-sm text-destructive">
-                          {errors.email.message}
+                          {errors.phone.message}
                         </p>
                       )}
                     </div>
@@ -282,7 +304,7 @@ export default function TeamDetailPage({
                         {inviteMember.isPending && (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         )}
-                        Gửi lời mời
+                        Thêm
                       </Button>
                     </DialogFooter>
                   </form>
@@ -293,70 +315,68 @@ export default function TeamDetailPage({
         </CardHeader>
         <CardContent>
           <div className="divide-y">
-            {activeMembers.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                    {member.userName.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">
-                        {member.userName}
-                      </span>
-                      {member.role === TeamMemberRole.CAPTAIN && (
-                        <Crown className="h-3.5 w-3.5 text-yellow-500" />
-                      )}
-                      {member.status === TeamMemberStatus.PENDING && (
-                        <StatusBadge status={member.status} />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {member.userEmail}
-                    </p>
-                  </div>
-                </div>
+            {activeMembers.map((member) => {
+              const memberName = member.name || member.userName || "Thành viên";
+              const memberPhone = member.phone || member.userEmail || "Chưa có SĐT";
 
-                {isCaptain &&
-                  member.userId !== currentUserId &&
-                  member.status === TeamMemberStatus.ACTIVE && (
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Chuyển đội trưởng"
-                        onClick={() =>
-                          setConfirmAction({
-                            type: "transfer",
-                            userId: member.userId,
-                            userName: member.userName,
-                          })
-                        }
-                      >
-                        <Crown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive"
-                        title="Loại khỏi đội"
-                        onClick={() =>
-                          setConfirmAction({
-                            type: "remove",
-                            userId: member.userId,
-                            userName: member.userName,
-                          })
-                        }
-                      >
-                        <UserMinus className="h-4 w-4" />
-                      </Button>
+              return (
+                <div key={member.id} className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
+                      {memberName.charAt(0).toUpperCase()}
                     </div>
-                  )}
-              </div>
-            ))}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{memberName}</span>
+                        {member.role === TeamMemberRole.CAPTAIN && (
+                          <Crown className="h-3.5 w-3.5 text-yellow-500" />
+                        )}
+                        {member.status === TeamMemberStatus.PENDING && (
+                          <StatusBadge status={member.status} />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{memberPhone}</p>
+                    </div>
+                  </div>
+
+                  {isCaptain &&
+                    member.role !== TeamMemberRole.CAPTAIN &&
+                    member.status === TeamMemberStatus.ACTIVE && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Chuyển đội trưởng"
+                          onClick={() =>
+                            setConfirmAction({
+                              type: "transfer",
+                              memberId: member.id,
+                              memberName,
+                            })
+                          }
+                        >
+                          <Crown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          title="Loại khỏi đội"
+                          onClick={() =>
+                            setConfirmAction({
+                              type: "remove",
+                              memberId: member.id,
+                              memberName,
+                            })
+                          }
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -390,9 +410,9 @@ export default function TeamDetailPage({
             </DialogTitle>
             <DialogDescription>
               {confirmAction?.type === "remove"
-                ? `${confirmAction.userName} sẽ bị loại khỏi đội.`
+                ? `${confirmAction.memberName} sẽ bị loại khỏi đội.`
                 : confirmAction?.type === "transfer"
-                  ? `${confirmAction.userName} sẽ trở thành đội trưởng mới.`
+                  ? `${confirmAction.memberName} sẽ trở thành đội trưởng mới.`
                   : "Bạn sẽ không còn là thành viên của đội."}
             </DialogDescription>
           </DialogHeader>
@@ -408,13 +428,13 @@ export default function TeamDetailPage({
                 leaveTeam.isPending
               }
               onClick={() => {
-                if (confirmAction?.type === "remove" && confirmAction.userId) {
-                  handleRemove(confirmAction.userId);
+                if (confirmAction?.type === "remove" && confirmAction.memberId) {
+                  handleRemove(confirmAction.memberId);
                 } else if (
                   confirmAction?.type === "transfer" &&
-                  confirmAction.userId
+                  confirmAction.memberId
                 ) {
-                  handleTransfer(confirmAction.userId);
+                  handleTransfer(confirmAction.memberId);
                 } else if (confirmAction?.type === "leave") {
                   handleLeave();
                 }

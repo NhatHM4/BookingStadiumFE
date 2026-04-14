@@ -86,8 +86,13 @@ export function useInviteMember() {
 export function useRemoveMember() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ teamId, userId }: { teamId: number; userId: number }) =>
-      removeMember(teamId, userId),
+    mutationFn: ({
+      teamId,
+      memberId,
+    }: {
+      teamId: number;
+      memberId: number;
+    }) => removeMember(teamId, memberId),
     onSuccess: (_, { teamId }) =>
       qc.invalidateQueries({ queryKey: ["teams", teamId] }),
   });
@@ -96,8 +101,13 @@ export function useRemoveMember() {
 export function useTransferCaptain() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ teamId, userId }: { teamId: number; userId: number }) =>
-      transferCaptain(teamId, userId),
+    mutationFn: ({
+      teamId,
+      memberId,
+    }: {
+      teamId: number;
+      memberId: number;
+    }) => transferCaptain(teamId, memberId),
     onSuccess: (_, { teamId }) => {
       qc.invalidateQueries({ queryKey: ["teams", teamId] });
       qc.invalidateQueries({ queryKey: ["my-teams"] });

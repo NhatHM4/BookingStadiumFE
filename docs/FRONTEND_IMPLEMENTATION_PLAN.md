@@ -179,6 +179,7 @@ src/
 ### 5.1 Mục tiêu
 - Dashboard tổng quan cho Owner
 - CRUD stadium, field, time slot
+- Hỗ trợ upload ảnh cho sân con (field image) khi tạo/sửa
 - Quản lý booking (xem/xác nhận/từ chối/hoàn thành)
 - Quản lý deposit (xác nhận/từ chối cọc, hoàn cọc)
 - Cấu hình deposit policy
@@ -220,12 +221,18 @@ Owner-specific APIs:
 - `PUT /owner/deposits/{id}/reject` — Từ chối cọc
 - `POST /owner/bookings/{id}/refund` — Hoàn cọc
 
+**Field payload update:**
+- `FieldRequest` hỗ trợ thêm `imageUrl?: string` cho cả tạo/sửa sân con
+- Upload ảnh sân con dùng lại API `POST /images/upload` (Owner)
+
 ---
 
 ## 6. Phase 5 - Team & Match Making
 
 ### 6.1 Mục tiêu
 - Quản lý đội bóng (CRUD, members)
+- Đội bóng bắt buộc có số điện thoại liên hệ
+- Thành viên đội không bắt buộc là user hệ thống (name + phone)
 - Tạo kèo ráp đối
 - Duyệt/nhận kèo
 - DS kèo đang mở (public)
@@ -250,9 +257,9 @@ Team APIs (11):
 - `GET /teams/{id}` — Chi tiết
 - `PUT /teams/{id}` — Sửa
 - `DELETE /teams/{id}` — Giải tán
-- `POST /teams/{id}/members` — Mời thành viên
-- `PUT /teams/{id}/members/{userId}/remove` — Xóa thành viên
-- `PUT /teams/{id}/members/{userId}/captain` — Chuyển đội trưởng
+- `POST /teams/{id}/members` — Thêm thành viên (`name`, `phone`)
+- `PUT /teams/{id}/members/{memberId}/remove` — Xóa thành viên
+- `PUT /teams/{id}/members/{memberId}/captain` — Chuyển đội trưởng
 - `PUT /teams/{id}/leave` — Rời đội
 - `PUT /team-invites/{id}/accept` — Chấp nhận mời
 - `PUT /team-invites/{id}/reject` — Từ chối mời

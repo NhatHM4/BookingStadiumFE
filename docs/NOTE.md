@@ -44,3 +44,24 @@
    - Gửi nhận kèo qua API: `POST /api/v1/match-requests/{id}/responses`
    - Hỗ trợ 2 cách nhận kèo: bằng đội hoặc tham gia cá nhân (không cần đội)
    - Chỉ tài khoản CUSTOMER mới nhận kèo trực tiếp; user chưa đăng nhập sẽ được yêu cầu login
+
+7. ✅ Owner - Sân con hỗ trợ ảnh (create/update)
+   - Cập nhật `FieldRequest` thêm `imageUrl?: string`
+   - Cập nhật form `/owner/stadiums/{id}/fields`:
+     + Upload ảnh sân con (dùng lại API `POST /api/v1/images/upload`)
+     + Preview, đổi ảnh, xóa ảnh trước khi submit
+     + Gửi `imageUrl` trong cả `POST /stadiums/{stadiumId}/fields` và `PUT /fields/{id}`
+   - Danh sách sân con trong trang owner hiển thị thumbnail ảnh
+   - Trang chi tiết sân public `/stadiums/{id}` hiển thị ảnh của từng sân con (nếu có)
+
+8. ✅ Team members linh hoạt + Team bắt buộc SĐT + Auto-fill SĐT ráp kèo
+   - Team:
+     + `TeamRequest` thêm `phone` và bắt buộc ở form tạo đội
+     + Danh sách/chi tiết đội hiển thị SĐT đội
+   - Team members:
+     + Chuyển từ invite theo email sang thêm trực tiếp `name + phone`
+     + `AddMemberRequest` cập nhật thành `{ name, phone }`
+     + Xử lý remove/chuyển đội trưởng dùng `memberId`
+   - Booking ráp kèo (`/bookings/new`):
+     + SĐT liên hệ được auto-fill từ đội đã chọn hoặc SĐT user đăng nhập
+     + User vẫn có thể sửa tay và hệ thống tôn trọng giá trị nhập thủ công

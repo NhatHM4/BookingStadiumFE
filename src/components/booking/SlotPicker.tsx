@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { format, addDays } from "date-fns";
 import { vi } from "date-fns/locale";
 import { CalendarDays, Clock, ChevronLeft, ChevronRight } from "lucide-react";
@@ -30,30 +30,30 @@ export function SlotPicker({
 }: SlotPickerProps) {
   const today = new Date();
   const [dateOffset, setDateOffset] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const currentDate = addDays(today, dateOffset);
+  const windowStartOffset = Math.floor(dateOffset / 7) * 7;
   const dateStr = externalDate || format(currentDate, "yyyy-MM-dd");
 
   const { data: slots, isLoading } = useAvailableSlots(fieldId, dateStr);
 
-  // Only check for past slots after client-side hydration to avoid mismatch
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   // Generate 7-day date selector
   const dates = Array.from({ length: 7 }, (_, i) => {
-    const d = addDays(today, dateOffset + i);
+    const offset = windowStartOffset + i;
+    const d = addDays(today, offset);
     return {
+      offset,
       date: format(d, "yyyy-MM-dd"),
       dayName: format(d, "EEE", { locale: vi }),
       dayNum: format(d, "dd"),
       monthName: format(d, "MM"),
-      isToday: i === 0 && dateOffset === 0,
+      isToday: offset === 0,
     };
   });
-
-  const internalDate = format(currentDate, "yyyy-MM-dd");
 
   // Check if a slot is in the past (only on client after mount)
   const isSlotInPast = (slot: AvailableSlotResponse, dateStr: string): boolean => {
@@ -73,29 +73,64 @@ export function SlotPicker({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Date selector */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            disabled={dateOffset <= 0}
-            onClick={() => setDateOffset(Math.max(0, dateOffset - 7))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              disabled={windowStartOffset <= 0}
+              onClick={() => setDateOffset(Math.max(0, windowStartOffset - 7))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
 
-          <div className="flex-1 grid grid-cols-7 gap-1">
+            <span className="text-xs sm:text-sm text-muted-foreground text-center">
+              {format(addDays(today, windowStartOffset), "dd/MM", { locale: vi })} -{" "}
+              {format(addDays(today, windowStartOffset + 6), "dd/MM", { locale: vi })}
+            </span>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => setDateOffset(windowStartOffset + 7)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Mobile: horizontal scroller */}
+          <div className="sm:hidden -mx-1 px-1 overflow-x-auto">
+            <div className="flex gap-2 min-w-max">
+              {dates.map((d) => (
+                <button
+                  key={d.date}
+                  onClick={() => setDateOffset(d.offset)}
+                  className={cn(
+                    "w-[78px] shrink-0 rounded-xl border px-2 py-2 text-center transition-colors",
+                    d.date === dateStr
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:bg-accent",
+                    d.isToday && d.date !== dateStr && "ring-1 ring-primary"
+                  )}
+                >
+                  <span className="block text-[11px] font-medium capitalize opacity-90">
+                    {d.dayName}
+                  </span>
+                  <span className="block text-xl font-bold leading-tight">{d.dayNum}</span>
+                  <span className="block text-[10px] opacity-75">T{d.monthName}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop/tablet: 7-column grid */}
+          <div className="hidden sm:grid grid-cols-7 gap-1">
             {dates.map((d) => (
               <button
                 key={d.date}
-                onClick={() => {
-                  const diff =
-                    Math.round(
-                      (new Date(d.date).getTime() - today.getTime()) /
-                      (1000 * 60 * 60 * 24) + 1
-                    );
-                  setDateOffset(diff);
-                }}
+                onClick={() => setDateOffset(d.offset)}
                 className={cn(
                   "flex flex-col items-center p-1.5 rounded-lg text-xs transition-colors",
                   d.date === dateStr
@@ -110,15 +145,6 @@ export function SlotPicker({
               </button>
             ))}
           </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={() => setDateOffset(dateOffset + 7)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
         </div>
 
         {/* Date display */}
@@ -135,7 +161,7 @@ export function SlotPicker({
             Không có khung giờ nào cho ngày này
           </p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {slots.map((slot) => {
               const isPast = isSlotInPast(slot, dateStr);
               const isDisabled = !slot.isAvailable || isPast;

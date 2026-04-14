@@ -7,6 +7,7 @@ import {
   Users,
   Shield,
   MapPin,
+  Phone,
   Trash2,
   Loader2,
 } from "lucide-react";
@@ -21,9 +22,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useMyTeams, useDeleteTeam, useAcceptInvite, useRejectInvite } from "@/hooks/use-teams";
-import { FieldTypeLabel, SkillLevelLabel, TeamMemberStatusLabel } from "@/types/enums";
-import { TeamMemberStatus } from "@/types/enums";
+import { useMyTeams, useDeleteTeam } from "@/hooks/use-teams";
+import { FieldTypeLabel, SkillLevelLabel } from "@/types/enums";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { toast } from "sonner";
@@ -31,17 +31,7 @@ import { toast } from "sonner";
 export default function MyTeamsPage() {
   const { data: teams, isLoading } = useMyTeams();
   const deleteTeam = useDeleteTeam();
-  const acceptInvite = useAcceptInvite();
-  const rejectInvite = useRejectInvite();
   const [deleteId, setDeleteId] = useState<number | null>(null);
-
-  // Separate pending invites from active teams
-  const pendingInvites =
-    teams?.flatMap((t) =>
-      (t.members || [])
-        .filter((m) => m.status === TeamMemberStatus.PENDING)
-        .map((m) => ({ ...m, teamName: t.name, teamId: t.id }))
-    ) ?? [];
 
   const handleDelete = async (id: number) => {
     try {
@@ -50,24 +40,6 @@ export default function MyTeamsPage() {
       setDeleteId(null);
     } catch {
       toast.error("Giải tán đội thất bại");
-    }
-  };
-
-  const handleAcceptInvite = async (inviteId: number) => {
-    try {
-      await acceptInvite.mutateAsync(inviteId);
-      toast.success("Đã chấp nhận lời mời!");
-    } catch {
-      toast.error("Chấp nhận thất bại");
-    }
-  };
-
-  const handleRejectInvite = async (inviteId: number) => {
-    try {
-      await rejectInvite.mutateAsync(inviteId);
-      toast.success("Đã từ chối lời mời!");
-    } catch {
-      toast.error("Từ chối thất bại");
     }
   };
 
@@ -95,44 +67,6 @@ export default function MyTeamsPage() {
           </Button>
         </Link>
       </div>
-
-      {/* Pending invites */}
-      {pendingInvites.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Lời mời chờ xác nhận</h2>
-          <div className="space-y-3">
-            {pendingInvites.map((invite) => (
-              <Card key={invite.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{invite.teamName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Bạn được mời vào đội
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleAcceptInvite(invite.id)}
-                      disabled={acceptInvite.isPending}
-                    >
-                      Chấp nhận
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRejectInvite(invite.id)}
-                      disabled={rejectInvite.isPending}
-                    >
-                      Từ chối
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Teams list */}
       {!teams || teams.length === 0 ? (
@@ -243,6 +177,10 @@ export default function MyTeamsPage() {
                       {[team.district, team.city].filter(Boolean).join(", ")}
                     </span>
                   )}
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {team.phone}
+                  </span>
                 </div>
               </CardContent>
             </Card>

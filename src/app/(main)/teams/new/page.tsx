@@ -35,13 +35,14 @@ export default function CreateTeamPage() {
     formState: { errors },
   } = useForm<TeamFormData>({
     resolver: zodResolver(teamSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", phone: "" },
   });
 
   const onSubmit = async (data: TeamFormData) => {
     try {
       const result = await createTeam.mutateAsync({
         name: data.name,
+        phone: data.phone,
         logoUrl: data.logoUrl || undefined,
         description: data.description || undefined,
         preferredFieldType: data.preferredFieldType as FieldType | undefined,
@@ -80,6 +81,17 @@ export default function CreateTeamPage() {
               <Input id="name" {...register("name")} placeholder="VD: FC Sao Vàng" />
               {errors.name && (
                 <p className="text-sm text-destructive">{errors.name.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Số điện thoại đội *</Label>
+              <Input
+                id="phone"
+                {...register("phone")}
+                placeholder="VD: 0912345678"
+              />
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
               )}
             </div>
             <div className="space-y-2">
