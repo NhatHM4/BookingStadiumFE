@@ -21,8 +21,8 @@ export default function CreateStadiumPage() {
         city: data.city || undefined,
         description: data.description || undefined,
         imageUrl: data.imageUrl || undefined,
-        latitude: data.latitude || undefined,
-        longitude: data.longitude || undefined,
+        latitude: data.latitude ?? undefined,
+        longitude: data.longitude ?? undefined,
         openTime: data.openTime || undefined,
         closeTime: data.closeTime || undefined,
       });

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Upload, X, ImageIcon } from "lucide-react";
+import { Loader2, Navigation, Upload, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,67 @@ interface StadiumFormProps {
   submitLabel?: string;
 }
 
+function isValidCoordinate(lat: number, lng: number): boolean {
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+function toCoordinatePair(latRaw: string, lngRaw: string) {
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+  if (!isValidCoordinate(lat, lng)) return null;
+  return { lat, lng };
+}
+
+function extractCoordinatesFromMapInput(input: string) {
+  const text = input.trim();
+  if (!text) return null;
+
+  const plainMatch = text.match(
+    /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
+  );
+  if (plainMatch) return toCoordinatePair(plainMatch[1], plainMatch[2]);
+
+  const atMatch = text.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+  if (atMatch) return toCoordinatePair(atMatch[1], atMatch[2]);
+
+  const dMatch = text.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (dMatch) return toCoordinatePair(dMatch[1], dMatch[2]);
+
+  try {
+    const url = new URL(text);
+    const queryKeys = ["q", "query", "ll", "center"];
+
+    for (const key of queryKeys) {
+      const value = url.searchParams.get(key);
+      if (!value) continue;
+      const pair = value.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+      if (pair) {
+        const result = toCoordinatePair(pair[1], pair[2]);
+        if (result) return result;
+      }
+    }
+
+    const mlat = url.searchParams.get("mlat");
+    const mlon = url.searchParams.get("mlon");
+    if (mlat && mlon) {
+      const osmResult = toCoordinatePair(mlat, mlon);
+      if (osmResult) return osmResult;
+    }
+
+    const hashMapMatch = url.hash.match(
+      /#map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/
+    );
+    if (hashMapMatch) {
+      return toCoordinatePair(hashMapMatch[1], hashMapMatch[2]);
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export function StadiumForm({
   initialData,
   onSubmit,
@@ -33,6 +94,10 @@ export function StadiumForm({
 }: StadiumFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [mapLink, setMapLink] = useState("");
+  const [locationMessage, setLocationMessage] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     getImageUrl(initialData?.imageUrl)
   );
@@ -53,8 +118,8 @@ export function StadiumForm({
           city: initialData.city || "",
           description: initialData.description || "",
           imageUrl: initialData.imageUrl || "",
-          latitude: initialData.latitude || 0,
-          longitude: initialData.longitude || 0,
+          latitude: initialData.latitude ?? undefined,
+          longitude: initialData.longitude ?? undefined,
           openTime: initialData.openTime || "",
           closeTime: initialData.closeTime || "",
         }
@@ -70,15 +135,72 @@ export function StadiumForm({
         },
   });
 
-  console.log("Watching imageUrl:", watch("imageUrl"));
+  const currentLatitude = watch("latitude");
+  const currentLongitude = watch("longitude");
 
-  const currentImageUrl = watch("imageUrl");
+  const applyCoordinates = useCallback(
+    (lat: number, lng: number) => {
+      setValue("latitude", Number(lat.toFixed(7)), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("longitude", Number(lng.toFixed(7)), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+    [setValue]
+  );
+
+  const handleExtractFromMapLink = () => {
+    const extracted = extractCoordinatesFromMapInput(mapLink);
+    if (!extracted) {
+      setLocationError(
+        "Không đọc được tọa độ từ link. Hãy dùng link có @lat,lng hoặc q=lat,lng."
+      );
+      setLocationMessage(null);
+      return;
+    }
+
+    applyCoordinates(extracted.lat, extracted.lng);
+    setLocationError(null);
+    setLocationMessage(
+      `Đã lấy tọa độ: ${extracted.lat.toFixed(7)}, ${extracted.lng.toFixed(7)}`
+    );
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Trình duyệt không hỗ trợ định vị");
+      setLocationMessage(null);
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setIsLocating(false);
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        applyCoordinates(lat, lng);
+        setLocationError(null);
+        setLocationMessage(
+          `Đã lấy vị trí hiện tại: ${lat.toFixed(7)}, ${lng.toFixed(7)}`
+        );
+      },
+      () => {
+        setIsLocating(false);
+        setLocationError("Không thể lấy vị trí hiện tại");
+        setLocationMessage(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate client-side
     if (!file.type.startsWith("image/")) {
       toast.error("Chỉ chấp nhận file ảnh");
       return;
@@ -88,11 +210,9 @@ export function StadiumForm({
       return;
     }
 
-    // Show local preview immediately
     const localPreview = URL.createObjectURL(file);
     setPreviewUrl(localPreview);
 
-    // Upload to server
     setUploading(true);
     try {
       const result = await uploadStadiumImage(
@@ -100,22 +220,17 @@ export function StadiumForm({
         initialData?.id || undefined
       );
       const path = result.data.path;
-      console.log("Uploaded image path:", path);
       setValue("imageUrl", path);
       setPreviewUrl(getImageUrl(path));
       toast.success("Upload ảnh thành công");
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || "Upload ảnh thất bại");
-      // Revert preview
       setPreviewUrl(getImageUrl(initialData?.imageUrl));
       setValue("imageUrl", initialData?.imageUrl || "");
     } finally {
       setUploading(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -198,7 +313,6 @@ export function StadiumForm({
               onChange={handleFileSelect}
               className="hidden"
             />
-            {/* Hidden field for imageUrl value */}
             <input type="hidden" {...register("imageUrl")} />
 
             {previewUrl ? (
@@ -261,7 +375,43 @@ export function StadiumForm({
         <CardHeader>
           <CardTitle className="text-lg">Tọa độ (tùy chọn)</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="mapLink">Link Google Maps / OpenStreetMap</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                id="mapLink"
+                placeholder="Dán link map hoặc nhập lat,lng"
+                value={mapLink}
+                onChange={(e) => {
+                  setMapLink(e.target.value);
+                  setLocationError(null);
+                  setLocationMessage(null);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleExtractFromMapLink}
+              >
+                Lấy tọa độ từ link
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleUseCurrentLocation}
+              disabled={isLocating}
+            >
+              <Navigation className="h-4 w-4 mr-1.5" />
+              {isLocating ? "Đang lấy vị trí..." : "Dùng vị trí hiện tại"}
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="latitude">Vĩ độ (Latitude)</Label>
@@ -269,7 +419,9 @@ export function StadiumForm({
                 id="latitude"
                 type="number"
                 step="any"
-                {...register("latitude", { setValueAs: (v: string) => v === "" ? undefined : Number(v) })}
+                {...register("latitude", {
+                  setValueAs: (v: string) => (v === "" ? undefined : Number(v)),
+                })}
               />
             </div>
             <div className="space-y-2">
@@ -278,9 +430,51 @@ export function StadiumForm({
                 id="longitude"
                 type="number"
                 step="any"
-                {...register("longitude", { setValueAs: (v: string) => v === "" ? undefined : Number(v) })}
+                {...register("longitude", {
+                  setValueAs: (v: string) => (v === "" ? undefined : Number(v)),
+                })}
               />
             </div>
+          </div>
+
+          <div className="flex flex-col items-start gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setValue("latitude", undefined, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                setValue("longitude", undefined, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                setLocationMessage(null);
+                setLocationError(null);
+              }}
+            >
+              Xóa tọa độ
+            </Button>
+
+            {locationMessage && (
+              <p className="text-sm text-green-600">{locationMessage}</p>
+            )}
+            {locationError && (
+              <p className="text-sm text-destructive">{locationError}</p>
+            )}
+            {typeof currentLatitude === "number" &&
+              typeof currentLongitude === "number" && (
+                <a
+                  href={`https://www.google.com/maps?q=${currentLatitude},${currentLongitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-primary underline underline-offset-4"
+                >
+                  Mở tọa độ hiện tại trên Google Maps
+                </a>
+              )}
           </div>
         </CardContent>
       </Card>
