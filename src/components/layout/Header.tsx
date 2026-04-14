@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { UserMenu } from "./UserMenu";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 const publicLinks = [
   { href: "/stadiums", label: "Tìm sân", icon: MapPin },
@@ -30,12 +30,18 @@ const customerLinks = [
 export function Header() {
   const { data: session, status } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isLoggedIn = status === "authenticated";
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
+  const isLoggedIn = mounted && status === "authenticated";
   const role = session?.user?.role;
 
   const navLinks = [
     ...publicLinks,
-    ...(isLoggedIn && role === "CUSTOMER" ? customerLinks : []),
+    ...(mounted && isLoggedIn && role === "CUSTOMER" ? customerLinks : []),
   ];
 
   return (
@@ -63,7 +69,7 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
-          {isLoggedIn ? (
+          {mounted && isLoggedIn ? (
             <UserMenu />
           ) : (
             <div className="hidden md:flex items-center gap-2">
@@ -103,7 +109,7 @@ export function Header() {
                   </Link>
                 ))}
 
-                {!isLoggedIn && (
+                {(!mounted || !isLoggedIn) && (
                   <>
                     <hr className="my-2" />
                     <Link

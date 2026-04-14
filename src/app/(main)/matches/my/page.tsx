@@ -89,7 +89,7 @@ export default function MyMatchesPage() {
           description={
             tab === "created"
               ? "Tạo trận để tìm đối thủ"
-              : "Tìm và ứng tuyển các trận đang mở"
+              : "Tìm và nhận kèo các trận đang mở"
           }
           action={
             tab === "created" ? (
@@ -173,7 +173,7 @@ function MatchRow({ match }: { match: MatchRequestResponse }) {
                 </span>
               </div>
               <span className="text-sm text-muted-foreground">
-                {match.responseCount} ứng tuyển
+                {match.responseCount} nhận kèo
               </span>
               <StatusBadge status={match.status} />
             </div>

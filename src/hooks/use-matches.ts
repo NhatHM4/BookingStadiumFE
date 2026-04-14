@@ -91,6 +91,7 @@ export function useSendMatchResponse() {
     onSuccess: (_, { matchId }) => {
       qc.invalidateQueries({ queryKey: ["match-requests", matchId] });
       qc.invalidateQueries({ queryKey: ["my-joined-matches"] });
+      qc.invalidateQueries({ queryKey: ["open-matches"] });
     },
   });
 }

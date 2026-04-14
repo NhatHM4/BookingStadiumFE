@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSearch } from "@/components/home/HeroSearch";
+import { OpenMatchesSection } from "@/components/home/OpenMatchesSection";
 
 const quickPoints = [
   "Đặt sân nhanh trong vài chạm",
@@ -35,14 +36,8 @@ export default function HomePage() {
 
               <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
                 Đặt sân bóng đơn giản,
-                <span className="block bg-gradient-to-r from-sky-600 to-emerald-500 bg-clip-text text-transparent">
-                  nhanh và rõ ràng
-                </span>
               </h1>
-
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg">
-                Chỉ giữ lại những gì cần thiết để bạn tìm sân và chốt lịch thật nhanh.
-              </p>
+              <OpenMatchesSection />
 
               <HeroSearch />
 

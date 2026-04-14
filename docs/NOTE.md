@@ -35,3 +35,12 @@
    - Sau khi đặt sân khách thành công → nút "Tra cứu đơn đặt sân" tự điền mã
    - Route public, không cần đăng nhập
    - Thêm tab "Tra cứu đơn" ở Header (hiển thị cho tất cả user)
+
+6. ✅ Trang chủ - Search kèo ráp và nhận kèo nhanh
+   - Thêm block "Kèo Ráp Đang Mở" ngay tại `/` (Home)
+   - Search client-side theo: mã kèo, đội chủ, tên sân, tên sân con
+   - Lấy dữ liệu từ API: `GET /api/v1/match-requests?page=0&size=100&sort=createdAt,desc`
+   - User có thể bấm "Nhận kèo ngay" trực tiếp tại Home
+   - Gửi nhận kèo qua API: `POST /api/v1/match-requests/{id}/responses`
+   - Hỗ trợ 2 cách nhận kèo: bằng đội hoặc tham gia cá nhân (không cần đội)
+   - Chỉ tài khoản CUSTOMER mới nhận kèo trực tiếp; user chưa đăng nhập sẽ được yêu cầu login

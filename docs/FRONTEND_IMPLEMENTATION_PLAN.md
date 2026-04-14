@@ -106,6 +106,8 @@ src/
 
 ### 3.1 Mục tiêu
 - Trang chủ với featured stadiums, tìm kiếm
+- Trang chủ hiển thị kèo ráp đang mở + tìm kiếm theo mã/đội/sân
+- Nhận kèo nhanh ngay tại trang chủ (không cần vào trang chi tiết kèo)
 - Danh sách sân với bộ lọc (city, district, fieldType)
 - Chi tiết sân (info, fields, time slots, reviews)
 - Tìm sân gần đây (geolocation)
@@ -131,6 +133,8 @@ src/
 | `GET /fields/{id}/time-slots` | `useTimeSlots(fieldId)` | DS khung giờ |
 | `GET /fields/{id}/available-slots` | `useAvailableSlots(fieldId, date)` | Slot trống |
 | `GET /stadiums/{id}/reviews` | `useStadiumReviews(stadiumId)` | Đánh giá |
+| `GET /match-requests` | `useOpenMatches({ page: 0, size: 100 })` | DS kèo đang mở trên Home |
+| `POST /match-requests/{id}/responses` | `useSendMatchResponse()` | Nhận kèo nhanh từ Home (cần đăng nhập) |
 
 ---
 

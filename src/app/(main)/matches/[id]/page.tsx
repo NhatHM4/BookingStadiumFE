@@ -333,13 +333,13 @@ export default function MatchDetailPage({
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">
-              Đội ứng tuyển ({match.responses?.length ?? 0})
+              Đội nhận kèo ({match.responses?.length ?? 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
             {match.responses?.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Chưa có đội nào ứng tuyển
+                Chưa có đội nào nhận kèo
               </p>
             ) : (
               <div className="space-y-3">
@@ -431,13 +431,13 @@ export default function MatchDetailPage({
               render={
                 <Button>
                   <Swords className="h-4 w-4 mr-2" />
-                  Ứng tuyển đấu
+                  nhận kèo đấu
                 </Button>
               }
             />
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Ứng tuyển ghép trận</DialogTitle>
+                <DialogTitle>nhận kèo ghép trận</DialogTitle>
                 <DialogDescription>
                   Chọn đội để tham gia trận đấu
                 </DialogDescription>
@@ -511,7 +511,7 @@ export default function MatchDetailPage({
                   {sendResponse.isPending && (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   )}
-                  Gửi ứng tuyển
+                  Gửi nhận kèo
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -560,7 +560,7 @@ export default function MatchDetailPage({
 
         {!session && (
           <Link href="/login">
-            <Button>Đăng nhập để ứng tuyển</Button>
+            <Button>Đăng nhập để nhận kèo</Button>
           </Link>
         )}
       </div>

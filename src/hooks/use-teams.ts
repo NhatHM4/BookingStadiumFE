@@ -18,11 +18,12 @@ import type { TeamRequest, AddMemberRequest } from "@/types/index";
 // Team CRUD Hooks
 // ========================
 
-export function useMyTeams() {
+export function useMyTeams(enabled = true) {
   return useQuery({
     queryKey: ["my-teams"],
     queryFn: () => getMyTeams(),
     select: (res) => res.data,
+    enabled,
   });
 }
 
