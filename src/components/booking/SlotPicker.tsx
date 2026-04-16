@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { format, addDays } from "date-fns";
 import { vi } from "date-fns/locale";
 import { CalendarDays, Clock, ChevronLeft, ChevronRight } from "lucide-react";
@@ -28,8 +28,10 @@ export function SlotPicker({
   selectedSlotId,
   selectedDate: externalDate,
 }: SlotPickerProps) {
+  const SLOTS_PER_PAGE = 5;
   const today = new Date();
   const [dateOffset, setDateOffset] = useState(0);
+  const [slotPage, setSlotPage] = useState(1);
   const isMounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -40,6 +42,21 @@ export function SlotPicker({
   const dateStr = externalDate || format(currentDate, "yyyy-MM-dd");
 
   const { data: slots, isLoading } = useAvailableSlots(fieldId, dateStr);
+  const totalSlotPages = Math.max(1, Math.ceil((slots?.length || 0) / SLOTS_PER_PAGE));
+  const paginatedSlots = slots?.slice(
+    (slotPage - 1) * SLOTS_PER_PAGE,
+    slotPage * SLOTS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setSlotPage(1);
+  }, [fieldId, dateStr]);
+
+  useEffect(() => {
+    if (slotPage > totalSlotPages) {
+      setSlotPage(totalSlotPages);
+    }
+  }, [slotPage, totalSlotPages]);
 
   // Generate 7-day date selector
   const dates = Array.from({ length: 7 }, (_, i) => {
@@ -161,57 +178,85 @@ export function SlotPicker({
             Không có khung giờ nào cho ngày này
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {slots.map((slot) => {
-              const isPast = isSlotInPast(slot, dateStr);
-              const isDisabled = !slot.isAvailable || isPast;
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {paginatedSlots?.map((slot) => {
+                const isPast = isSlotInPast(slot, dateStr);
+                const isDisabled = !slot.isAvailable || isPast;
 
-              return (
-                <button
-                  key={slot.timeSlotId}
-                  disabled={isDisabled}
-                  onClick={() => onSlotSelect?.(slot, dateStr)}
-                  className={cn(
-                    "flex flex-col items-center p-3 rounded-lg border text-sm transition-all",
-                    !isDisabled
-                      ? selectedSlotId === slot.timeSlotId
-                        ? "border-primary bg-primary/10 ring-2 ring-primary"
-                        : "border-border hover:border-primary hover:bg-primary/5 cursor-pointer"
-                      : "border-border bg-muted/50 opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  <span className="font-medium">
-                    {slot.startTime} - {slot.endTime}
-                  </span>
-                  <span
+                return (
+                  <button
+                    key={slot.timeSlotId}
+                    disabled={isDisabled}
+                    onClick={() => onSlotSelect?.(slot, dateStr)}
                     className={cn(
-                      "text-xs mt-1",
+                      "flex flex-col items-center p-3 rounded-lg border text-sm transition-all",
                       !isDisabled
-                        ? "text-primary font-semibold"
-                        : "text-muted-foreground line-through"
+                        ? selectedSlotId === slot.timeSlotId
+                          ? "border-primary bg-primary/10 ring-2 ring-primary"
+                          : "border-border hover:border-primary hover:bg-primary/5 cursor-pointer"
+                        : "border-border bg-muted/50 opacity-50 cursor-not-allowed"
                     )}
                   >
-                    {formatPrice(slot.price)}
-                  </span>
-                  {!slot.isAvailable && (
-                    <Badge
-                      variant="outline"
-                      className="mt-1 text-[10px] px-1.5 py-0"
+                    <span className="font-medium">
+                      {slot.startTime} - {slot.endTime}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs mt-1",
+                        !isDisabled
+                          ? "text-primary font-semibold"
+                          : "text-muted-foreground line-through"
+                      )}
                     >
-                      {slot.bookedByName || "Đã đặt"}
-                    </Badge>
-                  )}
-                  {isPast && slot.isAvailable && (
-                    <Badge
-                      variant="outline"
-                      className="mt-1 text-[10px] px-1.5 py-0 bg-muted"
-                    >
-                      Đã qua
-                    </Badge>
-                  )}
-                </button>
-              );
-            })}
+                      {formatPrice(slot.price)}
+                    </span>
+                    {!slot.isAvailable && (
+                      <Badge
+                        variant="outline"
+                        className="mt-1 text-[10px] px-1.5 py-0"
+                      >
+                        {slot.bookedByName || "Đã đặt"}
+                      </Badge>
+                    )}
+                    {isPast && slot.isAvailable && (
+                      <Badge
+                        variant="outline"
+                        className="mt-1 text-[10px] px-1.5 py-0 bg-muted"
+                      >
+                        Đã qua
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {totalSlotPages > 1 && (
+              <div className="flex items-center justify-end gap-2">
+                <span className="text-xs text-muted-foreground mr-1">
+                  Trang {slotPage}/{totalSlotPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={slotPage <= 1}
+                  onClick={() => setSlotPage((prev) => Math.max(1, prev - 1))}
+                >
+                  Trước
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={slotPage >= totalSlotPages}
+                  onClick={() =>
+                    setSlotPage((prev) => Math.min(totalSlotPages, prev + 1))
+                  }
+                >
+                  Sau
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

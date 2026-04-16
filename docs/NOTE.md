@@ -81,3 +81,9 @@
    - UI nhận kèo:
      + Cập nhật ở trang Home (`OpenMatchesSection`) và trang chi tiết kèo (`/matches/[id]`)
      + Hiển thị được cả response cá nhân (không có team), gồm tên người nhận kèo + SĐT liên hệ (nếu có)
+
+10. 📌 Áp dụng skill `telegram-booking-bot` cho repository hiện tại (mức tài liệu/spec)
+   - Vì repo này là Frontend Next.js, chưa có backend Java/Spring để implement bot trực tiếp
+   - Đã thêm đặc tả backend tiếng Việt tại:
+     + `docs/TELEGRAM_BOT_BACKEND_SPEC_VI.md`
+   - Tài liệu gồm: kiến trúc module, data model, webhook, event/outbox, flow hội thoại sân trống, checklist bàn giao BR/BE
